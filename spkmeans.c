@@ -473,8 +473,8 @@ matrix* formMatLnorm(matrix* matD , matrix* matW)
 
     IMat = formMatI(matD->rows);
     lnormMat = minusRootMat(matD);
-    lnormMat = mulMatrices(lnormMat,matW);
-    lnormMat = mulMatrices(lnormMat,minusRootMat(matD));
+    lnormMat = mulMatrices(lnormMat,matW,0,0);
+    lnormMat = mulMatrices(lnormMat,minusRootMat(matD),0,0);
     lnormMat = addMatrices(IMat, lnormMat ,1, 0,0);
     return lnormMat;
 }
