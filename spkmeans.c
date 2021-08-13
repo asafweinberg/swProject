@@ -475,7 +475,7 @@ matrix* formMatLnorm(matrix* matD , matrix* matW)
     lnormMat = minusRootMat(matD);
     lnormMat = mulMatrices(lnormMat,matW);
     lnormMat = mulMatrices(lnormMat,minusRootMat(matD));
-    lnormMat = addMatrices(IMat, lnormMat ,1);
+    lnormMat = addMatrices(IMat, lnormMat ,1, 0,0);
     return lnormMat;
 }
 
@@ -504,6 +504,7 @@ matrix* formMatI(int dimention)
 {
     int i,j;
     matrix* matI;
+
 
     matI = calloc(1, sizeof(matrix));
     matI->rows = dimention;
