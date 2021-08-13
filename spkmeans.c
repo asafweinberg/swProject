@@ -652,7 +652,64 @@ void jacobi(matrix* mat, matrix* eigenValues, matrix* eigenVectors)
 
 matrix* getRotationMatrixValues(matrix* mat, double *c, double *s)
 {
+    matrix *p;
+    int row, col, signTheta;
+    double **m, theta, t;
+
+    m = mat -> data;
+
+    p = newMatrix(mat -> rows, mat -> columns);
+    findlargestCell(mat, &row, &col);
+
+    theta = (m[row][row] - m[col][col]) / (2 * m[row][col]);
+    signTheta = abs(theta) / theta;
+    t = signTheta / (abs(theta) + pow((theta * theta + 1), 0.5));
+    *c = 1 / pow((t * t + 1), 0.5);
+    *s = (*c) * t;
+}
+
+void findlargestCell(matrix* mat, int *row, int *col) 
+{
+    int i, j;
+    double big = 0, **m;
+
+    m = mat -> data;
+
+    for (i = 0; i < mat -> rows; i++)
+    {
+        for (j = 0; j < mat -> columns; j++)
+        {
+            if (i == j)
+                continue;
+            if (abs(m[i][j]) > big) 
+            {
+                *row = i;
+                *col = j;
+            }
+        }
+    }
+    
+}
+
+
+void calcNextJacobiMatrix(matrix* matA, matrix* matB, double c, double s)
+{
 
 }
 
+int hasConvergence(matrix* matA, matrix* matB)
+{
+
+}
+
+// returns an array of the final starting vectors
+int* eigenGapHeuristic(matrix* matA)
+{
+
+}
+
+int isDiagonal(matrix* m)
+{
+
+}
 
