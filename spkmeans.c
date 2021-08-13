@@ -4,7 +4,7 @@
 
 void testPrint(char arr[]);
 double ** kmeansFunc(int k, int maxIter, int numOfPoints, int d, Node* pointsMatrix, cluster* centroids);
-Node* getPoints(int* numOfPoints, int* finald); 
+Node* getPoints(char* fileName, int* numOfPoints, int* finald);
 cluster* makeClusters(int k, int d, PyObject ** centroids);
 Node* getPointsMatrix(int d, int n, PyObject ** pointsMatrix);
 void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, int maxIteratiorns);
@@ -424,7 +424,7 @@ matrix* formMatW(Node* points, int numOfPoints, int d)
         Wmat->data[i] = calloc(numOfPoints,sizeof(double));
         for(j = 0 ; j<numOfPoints ; j++)
         {
-            dis = calcDistance(pointsMat[i],pointsMat[j]);  // needs to add root!
+            dis = calcDistance(pointsMat->data[i],pointsMat->data[j],pointsMat->rows);  // needs to add root!
             Wmat->data[i][j]=exp(-dis/2);
         }
     }
@@ -454,13 +454,13 @@ matrix* formMatD(matrix* matW)
                 sumW = 0;
                 for (l = 0; l < matW->columns; l++)
                 {
-                   sumW += matW[j][l];
+                   sumW += matW->data[j][l];
                 }
-                matI[i][j] = sumW;
+                matD->data[i][j] = sumW;
             }
             else
             {
-                matI[i][j] = 0;
+                matD->data[i][j] = 0;
             }
         }
     }
@@ -473,9 +473,9 @@ matrix* formMatLnorm(matrix* matD , matrix* matW)
 
     IMat = formMatI(matD->rows);
     lnormMat = minusRootMat(matD);
-    lnormMat = mulMatrices(lnormMat,matW);
-    lnormMat = mulMatrices(lnormMat,minusRootMat(matD));
-    lnormMat = addMatrices(IMat, lnormMat ,1);
+    lnormMat = mulMatrices(lnormMat,matW,0,0);
+    lnormMat = mulMatrices(lnormMat,minusRootMat(matD),0,0);
+    lnormMat = addMatrices(IMat, lnormMat ,1, 0,0);
     return lnormMat;
 }
 
@@ -494,7 +494,7 @@ matrix* minusRootMat(matrix* mat)
         newMat->data[i] = calloc(mat->columns,sizeof(double));
         for(j = 0; j< mat->columns; j++)
         {
-            newMat[i][j] = pow(mat[i][j],-0.5);
+            newMat->data[i][j] = pow(mat->data[i][j],-0.5);
         }
     }
     return newMat;
@@ -504,6 +504,7 @@ matrix* formMatI(int dimention)
 {
     int i,j;
     matrix* matI;
+
 
     matI = calloc(1, sizeof(matrix));
     matI->rows = dimention;
@@ -518,11 +519,11 @@ matrix* formMatI(int dimention)
         {
             if (i == j)
             {
-                matI[i][j] = 1;
+                matI->data[i][j] = 1;
             }
             else
             {
-                matI[i][j] = 0;
+                matI->data[i][j] = 0;
             }
         }
     }
@@ -546,14 +547,14 @@ matrix* pointsInMat(Node* points, int numOfPoints, int d)
         pointsMat->data[i] = calloc(d,sizeof(double));
         for(j = 0 ; j< d ; i++)
         {
-            pointsMat[i][j] = current->data[j];
+            pointsMat->data[i][j] = current->data[j];
         }
         current = current->next;
     }
     return pointsMat;
 }
 
-matrix* mulMatrices(matrix* mat1, matrix* mat2)
+matrix* mulMatrices(matrix* mat1, matrix* mat2, int free1, int free2)
 {
     int rows, columns, mat1Columns, i, j, l, sumElement;
     matrix* mulMat;
@@ -581,10 +582,20 @@ matrix* mulMatrices(matrix* mat1, matrix* mat2)
             mulMat->data[i][j] = sumElement;
         }
     }
+
+    if (free1)
+    {
+        freeMatrix(mat1);
+    }
+
+    if (free2)
+    {
+        freeMatrix(mat2);
+    }
     return mulMat;
 }
 
-matrix* addMatrices(matrix* mat1, matrix* mat2, int dec) // dec=1 -> dec 
+matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) // dec=1 -> dec 
 {
     // assumption: matrices equals in size
     int rows, columns, i, j;
@@ -622,6 +633,15 @@ matrix* addMatrices(matrix* mat1, matrix* mat2, int dec) // dec=1 -> dec
     }
     }
 
+    if (free1)
+    {
+        freeMatrix(mat1);
+    }
+
+    if (free2)
+    {
+        freeMatrix(mat2);
+    }
     return sumMat;
 
 }
@@ -713,3 +733,32 @@ int isDiagonal(matrix* m)
 
 }
 
+matrix * newMatrix(int rows, int columns)
+{
+    matrix * m;
+    int i, j;
+
+    m = calloc(1, sizeof(matrix));
+    m->rows = rows;
+    m->columns = columns;
+    m->data = calloc(rows,sizeof(double*));
+
+    for(i = 0 ; i<rows ; i++)
+    {
+        (m->data)[i] = calloc(columns,sizeof(double));
+    }
+    return m;
+}
+
+void freeMatrix(matrix * m)
+{
+    int i,j;
+    for(i = 0 ; i<m->rows ; i++)
+    {
+        free(m->data[i]);
+    }
+    free(m->data);
+    free(m);
+
+    return;
+}
