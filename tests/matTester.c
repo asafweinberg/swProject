@@ -169,7 +169,7 @@ void TestE0(int isDebug) {
         printf("TestE0 - Matrix W\t\tresult: Problem!\n");
     
     /* Calculate Matrix D */
-    D = formMatD(W);    
+    D = formMatD(W,false);    
     
     DA = newMatrix(numOfPoints, numOfPoints);
     setMatrixValue(DA, 0 ,0, 2.5372);
@@ -191,7 +191,7 @@ void TestE0(int isDebug) {
         printf("TestE0 - Matrix D\t\tresult: Great!\n") : 
         printf("TestE0 - Matrix D\t\tresult: Problem!\n");
 
-    L = formMatLnorm(D,W);
+    L = formMatLnorm(W,D,false,false);
     
     LA = newMatrix(numOfPoints, numOfPoints);
     setMatrixValue(LA, 0 ,0, 1.0);
@@ -340,7 +340,7 @@ void TestE1(int isDebug) {
         printf("TestE1 - Matrix W\t\tresult: Problem!\n");
     
     /* Calculate Matrix D */
-    D = formMatD(W);    
+    D = formMatD(W,false);    
     
     DA = newMatrix(numOfPoints, numOfPoints);
     setMatrixValue(DA, 0 ,0, 5.0340);
@@ -365,7 +365,7 @@ void TestE1(int isDebug) {
         printf("TestE1 - Matrix D\t\tresult: Great!\n") : 
         printf("TestE1 - Matrix D\t\tresult: Problem!\n");
 
-    L = formMatLnorm(W,D);
+    L = formMatLnorm(W,D,false, false);
     
     LA = newMatrix(numOfPoints, numOfPoints);
     setMatrixValue(LA, 0 ,0, 1.0);

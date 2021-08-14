@@ -435,7 +435,7 @@ matrix* formMatW(Node* points, int numOfPoints, int d)
     return Wmat;
 }
 
-matrix* formMatD(matrix* matW)
+matrix* formMatD(matrix* matW, int freeW)
 {
     int i, j, l;
     matrix* matD;
@@ -467,25 +467,42 @@ matrix* formMatD(matrix* matW)
             }
         }
     }
+
+    if(freeW)
+    {
+        free(matW);
+    }
+
     return matD;
 }
 
-matrix* formMatLnorm(matrix* matD , matrix* matW)
+matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW)
 {
     matrix *lnormMat, *IMat, *rootD;
 
     IMat = formMatI(matD->rows);
-    rootD = minusRootMat(matD);
+    rootD = minusRootMat(matD, false);
 
     lnormMat = rootD;
     lnormMat = mulMatrices(lnormMat, matW, false, true); //dont free lnorm cause it points to rootD
     lnormMat = mulMatrices(lnormMat, rootD, true, true);
-    lnormMat = addMatrices(IMat, lnormMat ,1, true, true);
+    lnormMat = addMatrices(IMat, lnormMat ,true, true, true);
+
+    if(freeD)
+    {
+        free(matD);
+    }
+    if(freeW)
+    {
+        free(matW);
+    }
+
+
     return lnormMat;
 }
 
 //only for diagonal matrix
-matrix* minusRootMat(matrix* mat)
+matrix* minusRootMat(matrix* mat, int free1)
 {
     int i,j;
     matrix* newMat;
@@ -495,6 +512,11 @@ matrix* minusRootMat(matrix* mat)
     for(i = 0; i< mat->rows; i++)
     {   
         newMat->data[i][i] = pow(mat->data[i][i],-0.5);
+    }
+
+    if(free1)
+    {
+        free(mat);
     }
     return newMat;
 }
@@ -843,12 +865,12 @@ matrix* newMatrix(int rows, int columns)
     m->rows = rows;
     m->columns = columns;
     m->data = calloc(rows,sizeof(double*));
-    assert(m -> data);
+    assert(m->data);
 
     for(i = 0; i < rows; i++)
     {
         (m->data)[i] = calloc(columns,sizeof(double));
-        assert(m->data[i]);
+        assert((m->data)[i]);
     }
     return m;
 }

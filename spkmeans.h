@@ -56,9 +56,9 @@ void freeMemo(cluster* clusters, Node* points, int k, int numOfpoints);
 cluster* makeClustersSp(int k, Node* points, int numOfPoints,int d);
 
 matrix* formMatW(Node* points, int numOfPoints, int d);
-matrix* formMatD(matrix* matW);
-matrix* formMatLnorm(matrix* matD , matrix* matW);
-matrix* minusRootMat(matrix* mat);
+matrix* formMatD(matrix* matW, int freeW);
+matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW);
+matrix* minusRootMat(matrix* mat, int free1);
 matrix* formMatI(int dimention);
 matrix* pointsToMat(Node* points, int numOfPoints, int d);
 
