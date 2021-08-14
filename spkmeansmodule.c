@@ -19,7 +19,7 @@ static PyObject *kmeansClustering(PyObject *self, PyObject *args) {
 
     nodesList = (Node*) getPointsMatrix(d, numberOfPoints, points);
     initialClusters = makeClusters(k, d, centroids);
-    means = kmeansFunc(k, maxIterations, numberOfPoints, d, nodesList, initialClusters);
+    means = kmeansFunc(k, maxIterations, numberOfPoints, d, nodesList, initialClusters); //means are final centroids
 
 
     wrapList = PyList_New(0);
@@ -39,7 +39,7 @@ static PyObject *kmeansClustering(PyObject *self, PyObject *args) {
     }
     free(means);
 
-    return Py_BuildValue("O", wrapList);
+    return Py_BuildValue("O", wrapList); // returns to python the final centroids
 }
 
 static PyMethodDef Module_Methods[] = {
@@ -95,4 +95,44 @@ Node* getPointsMatrix(int d, int n, PyObject** pointsMatrix)
     }
 
     return points;
+}
+
+static PyObject *runCFlow(PyObject *self, PyObject *args) 
+{
+    int k,i,j;
+    char* myGoal;
+    char* fileName;
+    double ** newPoints;
+    PyObject  *wrapList, *miu = NULL;
+    PyFloatObject *dNum = NULL;
+    if (!PyArg_ParseTuple(args, "iss", &k, &myGoal, &fileName)) {
+        return NULL;
+    }
+
+    newPoints = runMainFlow(k,myGoal,fileName); // double **
+    //can be merged to one func
+
+    if (newPoints==NULL)
+    {
+        return Py_BuildValue("O", NULL); //may cause error
+    }
+
+    wrapList = PyList_New(0);
+    for (i=0 ; i<len(newPoints) ; i++)
+    {
+        miu = PyList_New(0);    
+        for (j=0 ; j<len(newPoints[0]) ; j++)   //to check that point 0 exists
+        {
+            dNum= (PyFloatObject *)PyFloat_FromDouble(newPoints[i][j]);
+            PyList_Append(miu, (PyObject*) dNum);
+        }
+        PyList_Append(wrapList, miu);
+    }
+
+    for (i=0; i<k; i++){
+        free(newPoints[i]);
+    }
+    free(newPoints);
+
+    return Py_BuildValue("O", wrapList); // returns to python the T mat
 }

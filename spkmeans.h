@@ -78,3 +78,8 @@ int* eigenGapHeuristic(matrix* matA, int* k);
 int findMaxGap(eigenVal* values, int length);
 int isDiagonal(matrix* m);
 int compareEigenVal(const void * a, const void * b);
+
+double ** runMainFlow(int k, char* myGoal, char* fileName); //return T or NULL
+
+Node* getPointsFromT(double ** TDoubleArr);
+cluster * getClustersFromT(double ** TDoubleArr);

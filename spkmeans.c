@@ -1,42 +1,98 @@
 #include "spkmeans.h"
+#include <string.h>
 
+int main(int argc, char *argv[])
+{
+    //handle all goals
+    int k,d, numOfPoints;
+    char* myGoal;
+    char* fileName;
+    double ** TDoubleArr;
+    int maxIter=300;
+    // int maxIter = 300, numOfPoints, d;
+    Node* points;
+    cluster* clusters;
+    
 
-// int main(int argc, char *argv[])
-// {
-//     //handle all goals
-//     int k , maxIter = 300, numOfPoints, d;
-//     char* fileName;
-//     Node* points;
-//     cluster* clusters;
-//     enum goal myGoal;
-
-//     k = atoi(argv[1]);
-//     myGoal = atoi(argv[2]);
-//     fileName = argv[3];
+    k = atoi(argv[1]);
+    myGoal = argv[2];
+    fileName = argv[3];
   
-//   //  printf("%d",argc);
-//  //   printf("%d",maxIter);
-//     // k = 3;
-//     // fileName = "input_1.txt";
-//     // maxIter=600;
+  //  printf("%d",argc);
+ //   printf("%d",maxIter);
+    // k = 3;
+    // fileName = "input_1.txt";
+    // maxIter=600;
     
-//     points = getPoints(fileName, &numOfPoints, &d);
+    TDoubleArr = runMainFlow(k,myGoal,fileName);
 
-//     if (numOfPoints <= k && k != 0)
-//     {
-//         printf("ERROR K>=N");
-//         assert(0);
-//     }
+    // points = getPoints(fileName, &numOfPoints, &d);
 
-   
-//     clusters = makeClustersSp(k,points,numOfPoints,d);
-    
-     
-//     // printClusters(clusters, k, d);
-//     doKmeans(clusters,points,d,k,numOfPoints, maxIter);
-//     freeMemo(clusters,points,k,numOfPoints);
-//     return 0;
-// }
+    // printClusters(clusters, k, d);
+
+    k=len(TDoubleArr[0]);
+    d=k;
+    numOfPoints=len(TDoubleArr);
+    clusters=getClustersFromT(TDoubleArr);
+    points=getPointsFromT(TDoubleArr);
+
+    doKmeans(clusters,points,d,k,numOfPoints, maxIter);
+    freeMemo(clusters,points,k,numOfPoints);
+    return 0;
+}
+
+Node* getPointsFromT(double ** TDoubleArr)
+{
+    int d,i,j;
+    double number;
+    double* point;
+    Node* points, *current;
+    int numPoints=len(TDoubleArr);
+    d=len(TDoubleArr[0]);
+
+    points = (Node*)malloc(sizeof(Node));
+    assert(points);
+    current=points;
+
+    for (i=0 ; i<numPoints ; i++)
+    {
+       point=(double*)calloc(d,sizeof(double));
+       assert(point);
+
+       for(j=0 ; j<d ; j++)
+       { 
+           point[j]=TDoubleArr[i][j];
+       }
+       current=addNext(current, point);
+    }
+
+    return points;
+}
+
+cluster * getClustersFromT(double ** TDoubleArr)
+{
+    cluster* clusters;
+    int i,j,k,d;
+    k=len(TDoubleArr[0]);
+    d=k;
+    clusters=(cluster *)calloc(k, sizeof(cluster));
+    assert(clusters);
+
+    for(i=0; i<k; i++)
+    {
+        clusters[i].mean = (double*)calloc(d, sizeof(double));
+        assert(clusters[i].mean);
+        clusters[i].prevMean = (double*)calloc(d,sizeof(double));
+        assert(clusters[i].prevMean);
+        
+        for(j=0; j<d; j++)
+        {   
+            clusters[i].prevMean[j] = TDoubleArr[i][j];
+        }
+        clusters[i].size=0;
+    }
+    return clusters;
+}
 
 Node* getPoints(char* fileName, int* numOfPoints, int* finald) 
 {
@@ -853,6 +909,105 @@ void freeMatrix(matrix * m)
 int compareEigenVal(const void * a, const void * b)
 {
     return ( ((eigenVal*)b)->value - ((eigenVal*)a)->value );
+}
+
+
+void printMat(matrix *m)
+{
+    for (int i=0 ; i<m->rows ; i++){
+        for (int j=0 ; j< m->columns ;j++ ){
+            printf("%f,",m->data[i][j]);
+        }
+        printf("\n");
+    }
+    
+}
+
+double ** runSpk(int k, Node* points, int numOfPoints, int d)
+{   
+    double** TDoubleArr;
+    // cluster* clusters;
+    if(k==0)
+    {
+        //HANDLE THIS CASE AND CHANGE K
+    }
+
+    if (numOfPoints <= k && k != 0)
+    {
+        printf("ERROR K>=N");
+        assert(0);
+    }
+
+    return TDoubleArr; // ADD THE REST OF THE FLOW
+    // clusters = makeClustersSp(k,points,numOfPoints,d);
+    
+}
+
+void runWam(Node* points, int numOfPoints, int d)
+{
+    matrix * m = formMatW(points,numOfPoints,d);
+    printMat(m);
+}
+
+void runDdG(Node* points, int numOfPoints, int d)
+{
+    matrix * m = formMatW(points,numOfPoints,d);
+    m=formMatD(m,true); //may cause error
+    printMat(m);
+}
+
+void runLnorm(Node* points, int numOfPoints, int d)
+{
+    matrix * m1,*m2,*m3;
+    m1 = formMatW(points,numOfPoints,d);
+    m2 = formMatD(m1,false);
+    m3 = formMatLnorm(m2,m1,true,true);
+    printMat(m3);
+}
+
+void runJacobi(Node* points, int numOfPoints, int d)
+{
+   //TODO
+}
+
+double ** runMainFlow(int k, char* myGoal, char* fileName) //return T or NULL
+{
+    int maxIter = 300, numOfPoints, d;
+    Node* points;
+    cluster* clusters;
+
+    points = getPoints(fileName, &numOfPoints, &d);
+
+    if(!strcmp(myGoal,"spk")) //returns T
+    {
+        return runSpk(k,points,numOfPoints,d); //returns double **
+    }
+
+
+    if(!strcmp(myGoal,"wam"))
+    {
+        runWam(points,numOfPoints,d);
+        return NULL;
+    }
+
+    if(!strcmp(myGoal,"ddg"))
+    {
+        runDdG(points,numOfPoints,d);
+        return NULL;
+    }
+
+    if(!strcmp(myGoal,"lnorm"))
+    {
+        runLnorm(points,numOfPoints,d);
+        return NULL;
+
+    }
+
+    if(!strcmp(myGoal,"jacobi"))
+    {
+        runJacobi(points,numOfPoints,d);
+        return NULL;
+    }
 }
 
 
