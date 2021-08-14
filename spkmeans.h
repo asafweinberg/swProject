@@ -60,7 +60,7 @@ matrix* formMatD(matrix* matW);
 matrix* formMatLnorm(matrix* matD , matrix* matW);
 matrix* minusRootMat(matrix* mat);
 matrix* formMatI(int dimention);
-matrix* pointsInMat(Node* points, int numOfPoints, int d);
+matrix* pointsToMat(Node* points, int numOfPoints, int d);
 
 matrix* mulMatrices(matrix* mat1, matrix* mat2, int free1, int free2);
 matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2);
