@@ -1,4 +1,3 @@
-// #include <Python.h>
 #include <math.h>
 #include <stdio.h>
 #include <assert.h>
@@ -42,8 +41,7 @@ enum goal{spk,wam,ddg,lnorm,jacobi};
 void testPrint(char arr[]);
 double ** kmeansFunc(int k, int maxIter, int numOfPoints, int d, Node* pointsMatrix, cluster* centroids);
 Node* getPoints(char* fileName, int* numOfPoints, int* finald);
-// cluster* makeClusters(int k, int d, PyObject ** centroids);
-// Node* getPointsMatrix(int d, int n, PyObject ** pointsMatrix);
+
 void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, int maxIteratiorns);
 int continueLoop( int convergence, int count, int maxIter);
 void iterateClusters(cluster* clusters, int length, int d);

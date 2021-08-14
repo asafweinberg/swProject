@@ -1,42 +1,42 @@
 #include "spkmeans.h"
 
 
-int main(int argc, char *argv[])
-{
-    //handle all goals
-    int k , maxIter = 300, numOfPoints, d;
-    char* fileName;
-    Node* points;
-    cluster* clusters;
-    enum goal myGoal;
+// int main(int argc, char *argv[])
+// {
+//     //handle all goals
+//     int k , maxIter = 300, numOfPoints, d;
+//     char* fileName;
+//     Node* points;
+//     cluster* clusters;
+//     enum goal myGoal;
 
-    k = atoi(argv[1]);
-    myGoal = atoi(argv[2]);
-    fileName = argv[3];
+//     k = atoi(argv[1]);
+//     myGoal = atoi(argv[2]);
+//     fileName = argv[3];
   
-  //  printf("%d",argc);
- //   printf("%d",maxIter);
-    // k = 3;
-    // fileName = "input_1.txt";
-    // maxIter=600;
+//   //  printf("%d",argc);
+//  //   printf("%d",maxIter);
+//     // k = 3;
+//     // fileName = "input_1.txt";
+//     // maxIter=600;
     
-    points = getPoints(fileName, &numOfPoints, &d);
+//     points = getPoints(fileName, &numOfPoints, &d);
 
-    if (numOfPoints <= k && k != 0)
-    {
-        printf("ERROR K>=N");
-        assert(0);
-    }
+//     if (numOfPoints <= k && k != 0)
+//     {
+//         printf("ERROR K>=N");
+//         assert(0);
+//     }
 
    
-    clusters = makeClustersSp(k,points,numOfPoints,d);
+//     clusters = makeClustersSp(k,points,numOfPoints,d);
     
      
-    // printClusters(clusters, k, d);
-    doKmeans(clusters,points,d,k,numOfPoints, maxIter);
-    freeMemo(clusters,points,k,numOfPoints);
-    return 0;
-}
+//     // printClusters(clusters, k, d);
+//     doKmeans(clusters,points,d,k,numOfPoints, maxIter);
+//     freeMemo(clusters,points,k,numOfPoints);
+//     return 0;
+// }
 
 Node* getPoints(char* fileName, int* numOfPoints, int* finald) 
 {
