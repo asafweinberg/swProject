@@ -1,4 +1,8 @@
 #include "spkmeans.h"
+#include <Python.h>
+
+cluster* makeClusters(int k, int d, PyObject ** centroids);
+Node* getPointsMatrix(int d, int n, PyObject ** pointsMatrix);
 
 
 static PyObject *kmeansClustering(PyObject *self, PyObject *args) {
