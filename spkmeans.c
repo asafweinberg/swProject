@@ -5,8 +5,8 @@
 void testPrint(char arr[]);
 double ** kmeansFunc(int k, int maxIter, int numOfPoints, int d, Node* pointsMatrix, cluster* centroids);
 Node* getPoints(char* fileName, int* numOfPoints, int* finald);
-cluster* makeClusters(int k, int d, PyObject ** centroids);
-Node* getPointsMatrix(int d, int n, PyObject ** pointsMatrix);
+// cluster* makeClusters(int k, int d, PyObject ** centroids);
+// Node* getPointsMatrix(int d, int n, PyObject ** pointsMatrix);
 void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, int maxIteratiorns);
 int continueLoop( int convergence, int count, int maxIter);
 void iterateClusters(cluster* clusters, int length, int d);
@@ -17,44 +17,48 @@ int checkCon(cluster* clusters, int k, int d);
 Node* addNext(Node* node, double* point);
 void printClusters(cluster* clusters, int k, int d);
 void freeMemo(cluster* clusters, Node* points, int k, int numOfpoints);
+matrix* minusRootMat(matrix* mat, int free1);
+cluster* makeClustersSp(int k, Node* points, int numOfPoints,int d);
+matrix* formMatI(int dimention);
+matrix* mulMatrices(matrix* mat1, matrix* mat2, int free1, int free2);
+matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2); // dec=1 -> dec 
+matrix* pointsInMat(Node* points, int numOfPoints, int d);
+//void jacobi(matrix* mat, matrix* eigenValues, matrix* eigenVectors);
+matrix * newMatrix(int rows, int columns);
+void freeMatrix(matrix * m);
+void findlargestCell(matrix* mat, int *row, int *col);
 
+// int main(int argc, char *argv[])
+// {
+//     //handle all goals
+//     int k , maxIter = 300, numOfPoints, d;
+//     char* fileName;
+//     Node* points;
+//     cluster* clusters;
+//     enum goal myGoal;
 
-int main(int argc, char *argv[])
-{
-    //handle all goals
-    int k , maxIter = 300, numOfPoints, d;
-    char* fileName;
-    Node* points;
-    cluster* clusters;
-    enum goal myGoal;
-
-    k = atoi(argv[1]);
-    myGoal = atoi(argv[2]);
-    fileName = argv[3];
+//     k = atoi(argv[1]);
+//     myGoal = atoi(argv[2]);
+//     fileName = argv[3];
   
-  //  printf("%d",argc);
- //   printf("%d",maxIter);
-    // k = 3;
-    // fileName = "input_1.txt";
-    // maxIter=600;
+ 
     
-    points = getPoints(fileName, &numOfPoints, &d);
+//     points = getPoints(fileName, &numOfPoints, &d);
 
-    if (numOfPoints <= k && k != 0)
-    {
-        printf("ERROR K>=N");
-        assert(0);
-    }
+//     if (numOfPoints <= k && k != 0)
+//     {
+//         printf("ERROR K>=N");
+//         assert(0);
+//     }
 
    
-    clusters = makeClustersSp(k,points,numOfPoints,d);
+//     clusters = makeClustersSp(k,points,numOfPoints,d);
     
-     
-    // printClusters(clusters, k, d);
-    doKmeans(clusters,points,d,k,numOfPoints, maxIter);
-    freeMemo(clusters,points,k,numOfPoints);
-    return 0;
-}
+    
+//     doKmeans(clusters,points,d,k,numOfPoints, maxIter);
+//     freeMemo(clusters,points,k,numOfPoints);
+//     return 0;
+// }
 
 Node* getPoints(char* fileName, int* numOfPoints, int* finald) 
 {
@@ -432,7 +436,7 @@ matrix* formMatW(Node* points, int numOfPoints, int d)
     return Wmat;
 }
 
-matrix* formMatD(matrix* matW)
+matrix* formMatD(matrix* matW, int freeW)
 {
     int i,j,l;
     matrix* matD;
@@ -464,38 +468,54 @@ matrix* formMatD(matrix* matW)
             }
         }
     }
+
+    if(freeW)
+    {
+        free(matW);
+    }
+
     return matD;
 }
 
-matrix* formMatLnorm(matrix* matD , matrix* matW)
+matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW)
 {
-    matrix *lnormMat, *IMat;
+    matrix * lnormMat, *IMat;
 
     IMat = formMatI(matD->rows);
-    lnormMat = minusRootMat(matD);
-    lnormMat = mulMatrices(lnormMat,matW,0,0);
-    lnormMat = mulMatrices(lnormMat,minusRootMat(matD),0,0);
-    lnormMat = addMatrices(IMat, lnormMat ,1, 0,0);
+    lnormMat = minusRootMat(matD, true);
+    lnormMat = mulMatrices(lnormMat,matW,true,true);
+    lnormMat = mulMatrices(lnormMat,minusRootMat(matD,true),true,true);
+    lnormMat = addMatrices(IMat, lnormMat ,true, true, true);
+
+    if(freeD)
+    {
+        free(matD);
+    }
+    if(freeW)
+    {
+        free(matW);
+    }
+
     return lnormMat;
 }
 
-matrix* minusRootMat(matrix* mat)
+matrix* minusRootMat(matrix* mat, int free1)
 {
     int i,j;
     matrix* newMat;
 
-    newMat = calloc(1,sizeof(matrix));
-    newMat->rows = mat->rows;
-    newMat->columns = mat->columns;
-    newMat->data = calloc(mat->rows, sizeof(double*));
-    
+    newMat = newMatrix(mat->rows, mat->columns);
     for(i = 0; i< mat->rows; i++)
     {   
-        newMat->data[i] = calloc(mat->columns,sizeof(double));
         for(j = 0; j< mat->columns; j++)
         {
             newMat->data[i][j] = pow(mat->data[i][j],-0.5);
         }
+    }
+
+    if(free1)
+    {
+        free(mat);
     }
     return newMat;
 }
@@ -506,15 +526,11 @@ matrix* formMatI(int dimention)
     matrix* matI;
 
 
-    matI = calloc(1, sizeof(matrix));
-    matI->rows = dimention;
-    matI->rows = dimention;
-    matI->data = calloc(dimention,sizeof(double*));
-
-
+    matI = newMatrix(dimention,dimention);
+    
     for(i = 0 ; i< dimention ; i++)
     {   
-        matI->data[i] = calloc(dimention,sizeof(double));
+        
         for(j = 0 ; j< dimention ; j++)
         {
             if (i == j)
@@ -536,15 +552,11 @@ matrix* pointsInMat(Node* points, int numOfPoints, int d)
     matrix* pointsMat;
     Node* current;
 
-    pointsMat = calloc(1, sizeof(matrix));
-    pointsMat->rows = numOfPoints;
-    pointsMat->rows = d;
-    pointsMat->data = calloc(numOfPoints,sizeof(double*));
+    pointsMat = newMatrix(numOfPoints,d);
     current = points;
 
     for(i = 0 ; i< numOfPoints ; i++)
     {   
-        pointsMat->data[i] = calloc(d,sizeof(double));
         for(j = 0 ; j< d ; i++)
         {
             pointsMat->data[i][j] = current->data[j];
@@ -563,15 +575,10 @@ matrix* mulMatrices(matrix* mat1, matrix* mat2, int free1, int free2)
     columns = mat2->columns;
     mat1Columns = mat1->columns;
 
-    mulMat = calloc(1, sizeof(matrix));
-    assert(mulMat);
-    mulMat->rows = rows;
-    mulMat->columns = columns;
-    mulMat->data = calloc(rows,sizeof(double *));
-    assert(mulMat->data);
+    mulMat = newMatrix(rows,columns);
+
     for(i = 0 ; i<rows ; i++)
     {
-        (mulMat->data)[i] = calloc(columns,sizeof(double));
         for (j = 0 ; j<columns ; j++)
         {
             sumElement = 0;
@@ -602,18 +609,13 @@ matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) /
 
     rows = mat1->rows;
     columns = mat1->columns;
-    matrix* sumMat = calloc(1, sizeof(matrix));
-    assert(sumMat);
-    sumMat->rows = rows;
-    sumMat->columns = columns;
-    sumMat->data = calloc(rows,sizeof(double *));
-    assert(sumMat->data);
+    matrix* sumMat = newMatrix(rows,columns);
+
 
     if (dec == 0)
     {
     for(i = 0 ; i<rows ; i++)
     {
-        (sumMat->data)[i] = calloc(columns,sizeof(double));
         for(j = 0; j < columns; j++)
         {
             (sumMat->data)[i][j] = (mat1->data)[i][j]+(mat2->data)[i][j];
@@ -625,7 +627,6 @@ matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) /
     {
         for(i = 0 ; i<rows ; i++)
     {
-        (sumMat->data)[i] = calloc(columns,sizeof(double));
         for(j = 0; j<columns; j++)
         {
             (sumMat->data)[i][j] = (mat1->data)[i][j]-(mat2->data)[i][j];
@@ -647,28 +648,28 @@ matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) /
 }
 
 
-void jacobi(matrix* mat, matrix* eigenValues, matrix* eigenVectors)
-{
-    int iterations = 0, convergence = 0;
-    double c, s;
-    matrix *matA, *matB, *pivot, *tempVectors;
+// void jacobi(matrix* mat, matrix* eigenValues, matrix* eigenVectors)
+// {
+//     int iterations = 0, convergence = 0;
+//     double c, s;
+//     matrix *matA, *matB, *pivot, *tempVectors;
 
-    matA = mat;
-    matB = newMatrix(matA -> rows, matB -> columns); //TODO
+//     matA = mat;
+//     matB = newMatrix(matA -> rows, matB -> columns); //TODO
 
-    while (!isDiagonal(matA) && iterations < MaxJacobiIter && !convergence)
-    {
-        pivot = getRotationMatrixValues(matA, &c, &s); //TODO
-        calcNextJacobiMatrix(matA, matB, c, s); //TODO, make sure that matB changes
-        tempVectors = mulMatrices(tempVectors, pivot);
-        convergence = hasConvergence(matA, matB);
-        matA = matB;
-        iterations++;
-    }
+//     // while (!isDiagonal(matA) && iterations < MaxJacobiIter && !convergence)
+//     // {
+//     //     pivot = getRotationMatrixValues(matA, &c, &s); //TODO
+//     //     calcNextJacobiMatrix(matA, matB, c, s); //TODO, make sure that matB changes
+//     //     tempVectors = mulMatrices(tempVectors, pivot);
+//     //     convergence = hasConvergence(matA, matB);
+//     //     matA = matB;
+//     //     iterations++;
+//     // }
 
-    eigenValues = matA;
-    eigenVectors = tempVectors;
-}
+//     eigenValues = matA;
+//     eigenVectors = tempVectors;
+// }
 
 matrix* getRotationMatrixValues(matrix* mat, double *c, double *s)
 {
@@ -739,13 +740,16 @@ matrix * newMatrix(int rows, int columns)
     int i, j;
 
     m = calloc(1, sizeof(matrix));
+    assert(m);
     m->rows = rows;
     m->columns = columns;
     m->data = calloc(rows,sizeof(double*));
+    assert(m->data);
 
     for(i = 0 ; i<rows ; i++)
     {
         (m->data)[i] = calloc(columns,sizeof(double));
+        assert((m->data)[i]);
     }
     return m;
 }
