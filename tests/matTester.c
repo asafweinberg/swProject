@@ -18,7 +18,6 @@ void freeMemPointsArr(double **pointsArr, int n);
 double* createPointWithVals(int d, double *values);
 void printPointsArr(double **pointArr, int n, int d);
 void printPoint(double *point, int dim);
-void printMatrix(matrix* A);
 
 Node* pointsArrToList(double **pointsArr, int n);
 
@@ -28,8 +27,8 @@ Node* pointsArrToList(double **pointsArr, int n);
 
 void testMain(int isDebug) {
     // testMultiplyMatrixs(isDebug);
-    testJacobi(isDebug);
-    // testEigen(isDebug);
+    // testJacobi(isDebug);
+    testEigen(isDebug);
     // TestE0(isDebug);
     // TestE1(isDebug);
 }
@@ -437,13 +436,18 @@ void testJacobi(int isDebug) {
     matrix *V, *expectedV, *A, *expectedA, *Vectors;
     int testResult;
 
-    V = newMatrix(3, 3);
-    Vectors = newMatrix(3, 3);
+    // V = newMatrix(3, 3);
+    // Vectors = newMatrix(3, 3);
 
     A = newMatrix(3, 3);
     setMatrixValue(A, 0, 0, 3.0);
+    setMatrixValue(A, 0, 1, 2.0);
+    setMatrixValue(A, 0, 2, 4.0);
+
     setMatrixValue(A, 1, 0, 2.0);
     setMatrixValue(A, 1, 1, 0.0);
+    setMatrixValue(A, 1, 2, 2.0);
+
     setMatrixValue(A, 2, 0, 4.0);
     setMatrixValue(A, 2, 1, 2.0);
     setMatrixValue(A, 2, 2, 3.0);
@@ -464,118 +468,119 @@ void testJacobi(int isDebug) {
     setMatrixValue(expectedA, 1, 1, -1);
     setMatrixValue(expectedA, 2, 2, 8);
 
-    jacobiAlg(A, V, Vectors);
-    testResult = isMatrixEqual(A, expectedA) && isMatrixEqual(V, expectedV);
+    jacobiAlg(A, &V, &Vectors);
+    testResult = isMatrixEqual(V, expectedA) && isMatrixEqual(Vectors, expectedV);
     (testResult) ?
         printf("'test Jacobi'\t\t\tresult: Great!\n") :
         printf("'test Jacobi'\t\t\tresult: Problem!\n");
     if (isDebug == 1) {
         printf("Matrix A\n");
-        printMatrix(A);
+        printMatrix(V);
         printf("Expected Matrix A\n");
         printMatrix(expectedA);
         printf("Matrix V\n");
-        printMatrix(V);
+        printMatrix(Vectors);
         printf("Expected Matrix V\n");
         printMatrix(expectedV);
     }
 }
 
-// void testEigen(int isDebug) {
-//     matrix *A , *U;
-//     int testResult;
-//     double eps = 0.0000001;
-//     eigenVal **eigensArr;
-//     eigenVal *eigens, *expectedEigens1, *expectedEigens2;
-//     int i, j, k;
-//     A = newMatrix(3, 3);
-//     setMatrixValue(A, 0, 0, 3.0);
-//     setMatrixValue(A, 1, 0, 2.0);
-//     setMatrixValue(A, 1, 1, 0.0);
-//     setMatrixValue(A, 2, 0, 4.0);
-//     setMatrixValue(A, 2, 1, 2.0);
-//     setMatrixValue(A, 2, 2, 3.0);
+void testEigen(int isDebug) {
+    matrix *A , *U, *eigens, *expectedEigens1, *expectedEigens2, *V, *Vectors;
+    int testResult;
+    double eps = 0.0000001;
+    int i, j, k;
+    
+    A = newMatrix(3, 3);
+    setMatrixValue(A, 0, 0, 3.0);
+    setMatrixValue(A, 0, 1, 2.0);
+    setMatrixValue(A, 0, 2, 4.0);
 
-//     expectedEigens1 = (eigenVal *)calloc(3, sizeof(eigenVal));
-//     assert(expectedEigens1 != NULL);
-//     expectedEigens1[0].value = -1;
-//     expectedEigens1[0].vector = createPoint(3);
-//     expectedEigens1[1].value = -1;
-//     expectedEigens1[1].vector = createPoint(3);
-//     expectedEigens1[2].value = 8;
-//     expectedEigens1[2].vector = createPoint(3);
-//     setDataPointVal(expectedEigens1[0].vector, 0, 1 / sqrt(2));
-//     setDataPointVal(expectedEigens1[0].vector, 1, 0);
-//     setDataPointVal(expectedEigens1[0].vector, 2, - 1 / sqrt(2));
-//     setDataPointVal(expectedEigens1[1].vector, 0, - 1 / (3 * sqrt(2)));
-//     setDataPointVal(expectedEigens1[1].vector, 1, 4 / (3 * sqrt(2)));
-//     setDataPointVal(expectedEigens1[1].vector, 2, - 1 / (3 * sqrt(2)));
-//     setDataPointVal(expectedEigens1[2].vector, 0, 2.0 / 3.0);
-//     setDataPointVal(expectedEigens1[2].vector, 1, 1.0 / 3.0);
-//     setDataPointVal(expectedEigens1[2].vector, 2, 2.0 / 3.0);
+    setMatrixValue(A, 1, 0, 2.0);
+    setMatrixValue(A, 1, 1, 0.0);
+    setMatrixValue(A, 1, 2, 2.0);
 
-//     expectedEigens2 = (Eigen *) calloc(3, sizeof(Eigen));
-//     assert(expectedEigens2 != NULL);
-//     expectedEigens2[0].value = -1;
-//     expectedEigens2[0].vector = createPoint(3);
-//     expectedEigens2[1].value = -1;
-//     expectedEigens2[1].vector = createPoint(3);
-//     expectedEigens2[2].value = 8;
-//     expectedEigens2[2].vector = createPoint(3);
-//     setDataPointVal(expectedEigens2[1].vector, 0, 1 / sqrt(2));
-//     setDataPointVal(expectedEigens2[1].vector, 1, 0);
-//     setDataPointVal(expectedEigens2[1].vector, 2, - 1 / sqrt(2));
-//     setDataPointVal(expectedEigens2[0].vector, 0, - 1 / (3 * sqrt(2)));
-//     setDataPointVal(expectedEigens2[0].vector, 1, 4 / (3 * sqrt(2)));
-//     setDataPointVal(expectedEigens2[0].vector, 2, - 1 / (3 * sqrt(2)));
-//     setDataPointVal(expectedEigens2[2].vector, 0, 2.0 / 3.0);
-//     setDataPointVal(expectedEigens2[2].vector, 1, 1.0 / 3.0);
-//     setDataPointVal(expectedEigens2[2].vector, 2, 2.0 / 3.0);
+    setMatrixValue(A, 2, 0, 4.0);
+    setMatrixValue(A, 2, 1, 2.0);
+    setMatrixValue(A, 2, 2, 3.0);
 
-//     eigensArr = getSortedEigen(A);
-//     eigens = eigensArr->arr;
-//     testResult = true;
-//     for(i = 0; i < 3; i++) {
-//         if (fabs(eigens[i].value - expectedEigens1[i].value) > epsilon) {
-//             testResult = false;
-//             break;
-//         }
-//         if(!isPointsEquel(eigens[i].vector, expectedEigens1[i].vector) &&
-//            !isPointsEquel(eigens[i].vector, expectedEigens2[i].vector)) {
-//             testResult = false;
-//             break;
-//         }
-//     }
-//     (testResult) ?
-//         printf("'test Eigens'\t\t\tresult: Great!\n") :
-//         printf("'test Eigens'\t\t\tresult: Problem!\n");
-//     if (isDebug == 1) {
-//         printf("Eigens\n");
-//     }
 
-//     (eigengapGetK(eigensArr) == 1) ?
-//         printf("'test Eigengap Heuristic'\tresult: Great!\n") :
-//         printf("'test Eigengap Heuristic'\tresult: Problem!\n");
+    expectedEigens1 = newMatrix(3, 3);
+    setMatrixValue(expectedEigens1, 0, 0, 1 / sqrt(2));
+    setMatrixValue(expectedEigens1, 0, 1, 0);
+    setMatrixValue(expectedEigens1, 0, 2, - 1 / sqrt(2));
 
-//     k = 1;
-//     U = computeMatrixU(eigensArr, k);
+    setMatrixValue(expectedEigens1, 1, 0, - 1 / (3 * sqrt(2)));
+    setMatrixValue(expectedEigens1, 1, 1, 4 / (3 * sqrt(2)));
+    setMatrixValue(expectedEigens1, 1, 2, - 1 / (3 * sqrt(2)));
 
-//     assert(U->cols = k);
-//     assert(U->rows = 3);
-//     testResult = true;
-//     MatrixIterRows(U, i) {
-//         MatrixIterCols(U, j) {
-//             if (!isDoubleEqual(getMatrixValue(U, i, j), getDataPointVal((eigensArr->arr)[j].vector, i))) {
-//                 printf("im\n");
-//                 testResult = false;
-//                 break;
-//             }
-//         }
-//     }
-//     (testResult) ?
-//         printf("'test Matrix U'\t\t\tresult: Great!\n") :
-//         printf("'test Matrix U'\t\t\tresult: Problem!\n");
-// }
+    setMatrixValue(expectedEigens1, 2, 0, 2.0 / 3.0);
+    setMatrixValue(expectedEigens1, 2, 1, 1.0 / 3.0);
+    setMatrixValue(expectedEigens1, 2, 2, 2.0 / 3.0);
+
+
+    expectedEigens2 = newMatrix(3, 3);
+    setMatrixValue(expectedEigens2, 1, 0, 1 / sqrt(2));
+    setMatrixValue(expectedEigens2, 1, 1, 0);
+    setMatrixValue(expectedEigens2, 1, 2, - 1 / sqrt(2));
+
+    setMatrixValue(expectedEigens2, 0, 0, - 1 / (3 * sqrt(2)));
+    setMatrixValue(expectedEigens2, 0, 1, 4 / (3 * sqrt(2)));
+    setMatrixValue(expectedEigens2, 0, 2, - 1 / (3 * sqrt(2)));
+
+    setMatrixValue(expectedEigens2, 2, 0, 2.0 / 3.0);
+    setMatrixValue(expectedEigens2, 2, 1, 1.0 / 3.0);
+    setMatrixValue(expectedEigens2, 2, 2, 2.0 / 3.0);
+
+    jacobiAlg(A, &V, &Vectors);
+    printMatrix(V);
+    printMatrix(Vectors);
+    eigens = calcInitialVectorsFromJacobi(V, Vectors);
+    testResult = true;
+    printMatrix(eigens);
+    for(i = 0; i < 3; i++) {
+        for (j = 0; j < eigens->columns; j++)
+        {
+            if(abs(eigens->data[i][j] - expectedEigens1->data[i][j]) > epsilon &&
+               abs(eigens->data[i][j] - expectedEigens2->data[i][j]) > epsilon) {
+                testResult = false;
+                break;
+            }
+        }
+        if(!testResult)
+            break;
+    }
+
+    // (testResult) ?
+    //     printf("'test Eigens'\t\t\tresult: Great!\n") :
+    //     printf("'test Eigens'\t\t\tresult: Problem!\n");
+    // if (isDebug == 1) {
+    //     printf("Eigens\n");
+    // }
+
+    // (eigengapGetK(eigensArr) == 1) ?
+    //     printf("'test Eigengap Heuristic'\tresult: Great!\n") :
+    //     printf("'test Eigengap Heuristic'\tresult: Problem!\n");
+
+    // k = 1;
+    // U = computeMatrixU(eigensArr, k);
+
+    // assert(U->cols = k);
+    // assert(U->rows = 3);
+    // testResult = true;
+    // MatrixIterRows(U, i) {
+    //     MatrixIterCols(U, j) {
+    //         if (!isDoubleEqual(getMatrixValue(U, i, j), getDataPointVal((eigensArr->arr)[j].vector, i))) {
+    //             printf("im\n");
+    //             testResult = false;
+    //             break;
+    //         }
+    //     }
+    // }
+    (testResult) ?
+        printf("'test Matrix U'\t\t\tresult: Great!\n") :
+        printf("'test Matrix U'\t\t\tresult: Problem!\n");
+}
 
 // void testReadPoints_Input0() {
 //     double **pointsArr, **pointsArrRes;
@@ -676,19 +681,6 @@ void printPointsArr(double **pointArr, int n, int d) {
     int i;
     for (i = 0; i < n; i++) {
         printPoint(pointArr[i], d);
-    }
-}
-
-void printMatrix(matrix* A) {
-    int i, j;
-    printf("===================\n");
-    for (i = 0; i < A->rows; i++)
-    {
-        for (j = 0; j < A->columns; j++)
-        {
-            printf("%.4f    ", A->data[i][j]);
-        }
-        printf("\n");
     }
 }
 

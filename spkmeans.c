@@ -614,29 +614,31 @@ matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) /
 }
 
 
-void jacobiAlg(matrix* mat, matrix* eigenValues, matrix* eigenVectors)
+void jacobiAlg(matrix* mat, matrix** eigenValues, matrix** eigenVectors)
 {
-    int iterations = 0, convergence = 0, ipivot, jpivot;
+    int iterations = 0, convergence = 0, rowPivot, colPivot;
     double c, s;
     matrix *matA, *matB, *pivot, *tempVectors;
 
     matA = mat;
-    matB = newMatrix(matA -> rows, matB -> columns);
+    matB = newMatrix(matA -> rows, matA -> columns);
     tempVectors = formMatI(matA -> rows);
+    // printMatrix(matA);
 
-    while (!isDiagonal(matA) && iterations < MaxJacobiIter && !convergence)
+    while (!isDiagonal(matA) && ++iterations <= MaxJacobiIter && !convergence)
     {
-        pivot = getRotationMatrixValues(matA, &c, &s, &ipivot, &jpivot);
-        calcNextJacobiMatrix(matA, matB, c, s, ipivot, jpivot); //TODO, make sure that matB changes
+        pivot = getRotationMatrixValues(matA, &c, &s, &rowPivot, &colPivot);
+        // printMatrix(pivot);
+        matB = calcNextJacobiMatrix(matA, c, s, rowPivot, colPivot); //TODO, make sure that matB changes
         tempVectors = mulMatrices(tempVectors, pivot, true, true);
         convergence = hasConvergence(matA, matB);
         freeMatrix(matA);
         matA = matB;
-        iterations++;
+        // printMatrix(matA);
     }
 
-    eigenValues = matA;
-    eigenVectors = tempVectors;
+    *eigenValues = matA;
+    *eigenVectors = tempVectors;
 }
 
 matrix* getRotationMatrixValues(matrix* mat, double *c, double *s, int *rowPivot, int *colPivot)
@@ -652,13 +654,13 @@ matrix* getRotationMatrixValues(matrix* mat, double *c, double *s, int *rowPivot
     
     //TODO: Handle zeros of theta or cell and others
 
-    theta = (m[*rowPivot][*rowPivot] - m[*colPivot][*colPivot]) / (2 * m[*rowPivot][*colPivot]);
-    signTheta = abs(theta) / theta;
-    t = signTheta / (abs(theta) + pow((theta * theta + 1), 0.5));
+    theta = (m[*colPivot][*colPivot] - m[*rowPivot][*rowPivot]) / (2 * m[*rowPivot][*colPivot]);
+    signTheta = theta < 0? -1 : 1;
+    t = signTheta / (fabs(theta) + pow((theta * theta + 1), 0.5));
     *c = 1 / pow((t * t + 1), 0.5);
     *s = (*c) * t;
 
-    
+    return setPivotMatrix(*rowPivot, *colPivot, *c, *s, mat -> rows);
 }
 
 void findLargestCell(matrix* mat, int *row, int *col) 
@@ -674,20 +676,36 @@ void findLargestCell(matrix* mat, int *row, int *col)
         {
             if (i == j)
                 continue;
-            if (abs(m[i][j]) > big) 
+            if (fabs(m[i][j]) > big) 
             {
                 *row = i;
                 *col = j;
+                big = fabs(m[i][j]);
             }
         }
     }
-    
 }
 
-void calcNextJacobiMatrix(matrix* matA, matrix* matB, double c, double s, int i, int j)
+matrix* setPivotMatrix(int row, int col, double c, double s, int dim)
+{
+    matrix* pivot;
+
+    pivot = formMatI(dim);
+    pivot->data[row][row] = c;
+    pivot->data[row][col] = s;
+    pivot->data[col][row] = -s;
+    pivot->data[col][col] = c;
+
+    return pivot;
+}
+
+matrix* calcNextJacobiMatrix(matrix* matA, double c, double s, int i, int j)
 {
     int r;
     double **a, **b;
+    matrix* matB;
+
+    matB = copyMatrix(matA);
 
     a = matA -> data;
     b = matB -> data;
@@ -697,7 +715,10 @@ void calcNextJacobiMatrix(matrix* matA, matrix* matB, double c, double s, int i,
         if(r != i && r!= j)
         {
             b[r][i] = c*a[r][i] - s*a[r][j];
+            b[i][r] = c*a[r][i] - s*a[r][j];
+
             b[r][j] = c*a[r][j] + s*a[r][i];
+            b[j][r] = c*a[r][j] + s*a[r][i];
         }
     }
 
@@ -705,6 +726,8 @@ void calcNextJacobiMatrix(matrix* matA, matrix* matB, double c, double s, int i,
     b[j][j] = s*s*a[i][i] + c*c*a[j][j] + 2*s*c*a[i][j];
     b[i][j] = 0;
     b[j][i] = 0;
+
+    return matB;
 }
 
 int hasConvergence(matrix* matA, matrix* matB)
@@ -739,13 +762,13 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors)
     vectorsIndices = eigenGapHeuristic(eigenValues, &k);
     finalVectors = newMatrix(eigenVectors->rows, k);
 
-    for (i = 0; i < eigenVectors->rows; i++)
+    for (j = 0; j < k; j++)
     {
-        for (j = 0; j < k; i++)
+        for (i = 0; i < eigenVectors->rows; i++)
         {
             finalVectors->data[i][j] = eigenVectors->data[i][vectorsIndices[j]];
-        } 
-    }
+        }
+    }        
     return finalVectors;
 }
 
@@ -778,7 +801,7 @@ int* eigenGapHeuristic(matrix* matA, int* k)
 
 int findMaxGap(eigenVal* values, int length)
 {
-    double currDiff, maxDiff = 0;
+    double currDiff, maxDiff = -1;
     int i, k;
     for (i = 0; i < (length-1) / 2; i++)
     {
@@ -789,7 +812,7 @@ int findMaxGap(eigenVal* values, int length)
             k = i;
         }
     }
-    return k;
+    return k + 1;
 }
 
 int isDiagonal(matrix* m)
@@ -841,9 +864,40 @@ void freeMatrix(matrix * m)
     free(m);
 }
 
+matrix* copyMatrix(matrix* m)
+{
+    matrix* newMat;
+    int i,j;
+
+    newMat = newMatrix(m->rows, m->columns);
+
+    for (i = 0; i < m -> rows; i++)
+    {
+        for (j = 0; j < m->columns; j++)
+        {
+            newMat->data[i][j] = m->data[i][j];
+        }
+        
+    }
+    return newMat;
+}
+
+void printMatrix(matrix* A) {
+    int i, j;
+    printf("===================\n");
+    for (i = 0; i < A->rows; i++)
+    {
+        for (j = 0; j < A->columns; j++)
+        {
+            printf("%.4f    ", A->data[i][j]);
+        }
+        printf("\n");
+    }
+}
+
 int compareEigenVal(const void * a, const void * b)
 {
-    return ( ((eigenVal*)b)->value - ((eigenVal*)a)->value );
+    return ( ((eigenVal*)a)->value - ((eigenVal*)b)->value );
 }
 
 
