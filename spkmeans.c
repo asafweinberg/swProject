@@ -26,6 +26,11 @@ int main(int argc, char *argv[])
     
     TDoubleArr = runMainFlow(k,myGoal,fileName);
 
+    if(TDoubleArr==NULL)
+    {
+        return 0;
+    }
+    
     // points = getPoints(fileName, &numOfPoints, &d);
 
     // printClusters(clusters, k, d);
@@ -979,17 +984,6 @@ int compareEigenVal(const void * a, const void * b)
 }
 
 
-void printMat(matrix *m)
-{
-    for (int i=0 ; i<m->rows ; i++){
-        for (int j=0 ; j< m->columns ;j++ ){
-            printf("%f,",m->data[i][j]);
-        }
-        printf("\n");
-    }
-    
-}
-
 double ** runSpk(int k, Node* points, int numOfPoints, int d)
 {   
     double** TDoubleArr;
@@ -1013,14 +1007,14 @@ double ** runSpk(int k, Node* points, int numOfPoints, int d)
 void runWam(Node* points, int numOfPoints, int d)
 {
     matrix * m = formMatW(points,numOfPoints,d);
-    printMat(m);
+    printMatrix(m);
 }
 
 void runDdG(Node* points, int numOfPoints, int d)
 {
     matrix * m = formMatW(points,numOfPoints,d);
     m=formMatD(m,true); //may cause error
-    printMat(m);
+    printMatrix(m);
 }
 
 void runLnorm(Node* points, int numOfPoints, int d)
@@ -1029,7 +1023,7 @@ void runLnorm(Node* points, int numOfPoints, int d)
     m1 = formMatW(points,numOfPoints,d);
     m2 = formMatD(m1,false);
     m3 = formMatLnorm(m2,m1,true,true);
-    printMat(m3);
+    printMatrix(m3);
 }
 
 void runJacobi(Node* points, int numOfPoints, int d)
