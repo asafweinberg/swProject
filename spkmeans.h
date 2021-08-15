@@ -60,23 +60,28 @@ matrix* formMatD(matrix* matW, int freeW);
 matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW);
 matrix* minusRootMat(matrix* mat, int free1);
 matrix* formMatI(int dimention);
-matrix* pointsInMat(Node* points, int numOfPoints, int d);
+matrix* pointsToMat(Node* points, int numOfPoints, int d);
 
 matrix* mulMatrices(matrix* mat1, matrix* mat2, int free1, int free2);
 matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2);
 matrix* newMatrix(int rows, int columns);
 void freeMatrix(matrix * m);
 
-void jacobiAlg(matrix* mat, matrix* eigenValues, matrix* eigenVectors);
+void jacobiAlg(matrix* mat, matrix** eigenValues, matrix** eigenVectors);
 matrix* getRotationMatrixValues(matrix* mat, double *c, double *s, int *rowPivot, int *colPivot);
 void findLargestCell(matrix* mat, int *row, int *col) ;
-void calcNextJacobiMatrix(matrix* matA, matrix* matB, double c, double s, int i, int j);
+matrix* calcNextJacobiMatrix(matrix* matA, double c, double s, int i, int j);
+matrix* setPivotMatrix(int row, int col, double c, double s, int dim);
 int hasConvergence(matrix* matA, matrix* matB);
 double calcOff(matrix* m);
 matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors);
 int* eigenGapHeuristic(matrix* matA, int* k);
 int findMaxGap(eigenVal* values, int length);
 int isDiagonal(matrix* m);
+matrix* copyMatrix(matrix* m);
+void printMatrix(matrix* A);
+
+
 int compareEigenVal(const void * a, const void * b);
 
 double ** runMainFlow(int k, char* myGoal, char* fileName); //return T or NULL

@@ -405,6 +405,29 @@ void freeMemo(cluster* clusters, Node* points, int k, int numOfpoints)
     }
 }
 
+void printLst(Node* lst, int d)
+{
+    int j;
+    Node* curr = lst;
+
+    while (curr->data != NULL)
+    {
+        for(int j=0 ; j<d ; j++)
+        {
+            if(j!=d-1)
+            {
+                printf("%.4f,", curr->data[j]);
+            }
+            else
+            {
+              printf("%.4f\n", curr->data[j]);  
+            }
+        }
+        curr = curr->next;
+    }
+    
+    
+}
 
 /*
 cluster* makeClusters(int k, int d , PyObject ** centroids)
@@ -450,20 +473,18 @@ matrix* formMatW(Node* points, int numOfPoints, int d)
     double dis;
 
     current = points;
-    Wmat = calloc(1,sizeof(matrix));
-    Wmat->rows = numOfPoints;
-    Wmat->columns = numOfPoints;
-    Wmat->data = calloc(numOfPoints,sizeof(double *));
+    Wmat = newMatrix(numOfPoints, numOfPoints);
+    pointsMat = pointsToMat(points, numOfPoints, d);
 
-    pointsMat = pointsInMat(points, numOfPoints, d);
-
-    for (i = 0; i<numOfPoints; i++)
+    for (i = 0; i < numOfPoints; i++)
     {
-        Wmat->data[i] = calloc(numOfPoints,sizeof(double));
-        for(j = 0 ; j<numOfPoints ; j++)
+        for(j = 0 ; j < numOfPoints ; j++)
         {
-            dis = calcDistance(pointsMat->data[i],pointsMat->data[j],pointsMat->rows);  // needs to add root!
-            Wmat->data[i][j]=exp(-dis/2);
+            if(i != j)
+            {
+                dis = pow(calcDistance(pointsMat->data[i], pointsMat->data[j], d), 0.5);
+                Wmat->data[i][j] = exp(-dis/2);
+            }
         }
     }
 
@@ -513,12 +534,14 @@ matrix* formMatD(matrix* matW, int freeW)
 
 matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW)
 {
-    matrix * lnormMat, *IMat;
+    matrix *lnormMat, *IMat, *rootD;
 
     IMat = formMatI(matD->rows);
-    lnormMat = minusRootMat(matD, true);
-    lnormMat = mulMatrices(lnormMat,matW,true,true);
-    lnormMat = mulMatrices(lnormMat,minusRootMat(matD,true),true,true);
+    rootD = minusRootMat(matD, false);
+
+    lnormMat = rootD;
+    lnormMat = mulMatrices(lnormMat, matW, false, true); //dont free lnorm cause it points to rootD
+    lnormMat = mulMatrices(lnormMat, rootD, true, true);
     lnormMat = addMatrices(IMat, lnormMat ,true, true, true);
 
     if(freeD)
@@ -530,21 +553,21 @@ matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW)
         free(matW);
     }
 
+
     return lnormMat;
 }
 
+//only for diagonal matrix
 matrix* minusRootMat(matrix* mat, int free1)
 {
     int i,j;
     matrix* newMat;
 
     newMat = newMatrix(mat->rows, mat->columns);
+    
     for(i = 0; i< mat->rows; i++)
     {   
-        for(j = 0; j< mat->columns; j++)
-        {
-            newMat->data[i][j] = pow(mat->data[i][j],-0.5);
-        }
+        newMat->data[i][i] = pow(mat->data[i][i],-0.5);
     }
 
     if(free1)
@@ -559,12 +582,10 @@ matrix* formMatI(int dimention)
     int i,j;
     matrix* matI;
 
+    matI = newMatrix(dimention, dimention);
 
-    matI = newMatrix(dimention,dimention);
-    
-    for(i = 0 ; i< dimention ; i++)
+    for(i = 0 ; i < dimention ; i++)
     {   
-        
         for(j = 0 ; j< dimention ; j++)
         {
             if (i == j)
@@ -580,18 +601,18 @@ matrix* formMatI(int dimention)
     return matI;
 }
 
-matrix* pointsInMat(Node* points, int numOfPoints, int d)
+matrix* pointsToMat(Node* points, int numOfPoints, int d)
 {
     int i, j;
     matrix* pointsMat;
     Node* current;
 
-    pointsMat = newMatrix(numOfPoints,d);
+    pointsMat = newMatrix(numOfPoints, d);
     current = points;
 
-    for(i = 0 ; i< numOfPoints ; i++)
+    for(i = 0 ; i < numOfPoints ; i++)
     {   
-        for(j = 0 ; j< d ; i++)
+        for(j = 0 ; j < d ; j++)
         {
             pointsMat->data[i][j] = current->data[j];
         }
@@ -602,18 +623,19 @@ matrix* pointsInMat(Node* points, int numOfPoints, int d)
 
 matrix* mulMatrices(matrix* mat1, matrix* mat2, int free1, int free2)
 {
-    int rows, columns, mat1Columns, i, j, l, sumElement;
+    int rows, columns, mat1Columns, i, j, l;
     matrix* mulMat;
+    double sumElement;
 
     rows = mat1->rows;
     columns = mat2->columns;
     mat1Columns = mat1->columns;
 
-    mulMat = newMatrix(rows,columns);
-
-    for(i = 0 ; i<rows ; i++)
+    mulMat = newMatrix(rows, columns);
+    
+    for(i = 0; i < rows; i++)
     {
-        for (j = 0 ; j<columns ; j++)
+        for (j = 0; j < columns; j++)
         {
             sumElement = 0;
             for(l = 0; l < mat1Columns; l++)
@@ -638,34 +660,22 @@ matrix* mulMatrices(matrix* mat1, matrix* mat2, int free1, int free2)
 
 matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) // dec=1 -> dec 
 {
-    // assumption: matrices equals in size
-    int rows, columns, i, j;
+    int rows, columns, i, j, sign;
+    matrix* sumMat;
+
+    assert((mat1->rows == mat2->rows) && (mat1->columns == mat2->columns));
 
     rows = mat1->rows;
     columns = mat1->columns;
-    matrix* sumMat = newMatrix(rows,columns);
+    sumMat = newMatrix(rows,columns);
+    sign = dec? -1: 1;
 
-
-    if (dec == 0)
-    {
-    for(i = 0 ; i<rows ; i++)
+    for(i = 0 ; i < rows ; i++)
     {
         for(j = 0; j < columns; j++)
         {
-            (sumMat->data)[i][j] = (mat1->data)[i][j]+(mat2->data)[i][j];
+            sumMat->data[i][j] = (mat1->data)[i][j] + (sign * (mat2->data)[i][j]);
         }
-    }
-    }
-
-    else
-    {
-        for(i = 0 ; i<rows ; i++)
-    {
-        for(j = 0; j<columns; j++)
-        {
-            (sumMat->data)[i][j] = (mat1->data)[i][j]-(mat2->data)[i][j];
-        }
-    }
     }
 
     if (free1)
@@ -682,28 +692,31 @@ matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) /
 }
 
 
-void jacobiAlg(matrix* mat, matrix* eigenValues, matrix* eigenVectors)
+void jacobiAlg(matrix* mat, matrix** eigenValues, matrix** eigenVectors)
 {
-    int iterations = 0, convergence = 0, ipivot, jpivot;
+    int iterations = 0, convergence = 0, rowPivot, colPivot;
     double c, s;
     matrix *matA, *matB, *pivot, *tempVectors;
 
     matA = mat;
-    matB = newMatrix(matA -> rows, matB -> columns); //TODO
+    matB = newMatrix(matA -> rows, matA -> columns);
+    tempVectors = formMatI(matA -> rows);
+    // printMatrix(matA);
 
-    while (!isDiagonal(matA) && iterations < MaxJacobiIter && !convergence)
+    while (!isDiagonal(matA) && ++iterations <= MaxJacobiIter && !convergence)
     {
-        pivot = getRotationMatrixValues(matA, &c, &s, &ipivot, &jpivot);
-        calcNextJacobiMatrix(matA, matB, c, s, ipivot, jpivot); //TODO, make sure that matB changes
+        pivot = getRotationMatrixValues(matA, &c, &s, &rowPivot, &colPivot);
+        // printMatrix(pivot);
+        matB = calcNextJacobiMatrix(matA, c, s, rowPivot, colPivot); //TODO, make sure that matB changes
         tempVectors = mulMatrices(tempVectors, pivot, true, true);
         convergence = hasConvergence(matA, matB);
         freeMatrix(matA);
         matA = matB;
-        iterations++;
+        // printMatrix(matA);
     }
 
-    eigenValues = matA;
-    eigenVectors = tempVectors;
+    *eigenValues = matA;
+    *eigenVectors = tempVectors;
 }
 
 matrix* getRotationMatrixValues(matrix* mat, double *c, double *s, int *rowPivot, int *colPivot)
@@ -719,11 +732,13 @@ matrix* getRotationMatrixValues(matrix* mat, double *c, double *s, int *rowPivot
     
     //TODO: Handle zeros of theta or cell and others
 
-    theta = (m[*rowPivot][*rowPivot] - m[*colPivot][*colPivot]) / (2 * m[*rowPivot][*colPivot]);
-    signTheta = abs(theta) / theta;
-    t = signTheta / (abs(theta) + pow((theta * theta + 1), 0.5));
+    theta = (m[*colPivot][*colPivot] - m[*rowPivot][*rowPivot]) / (2 * m[*rowPivot][*colPivot]);
+    signTheta = theta < 0? -1 : 1;
+    t = signTheta / (fabs(theta) + pow((theta * theta + 1), 0.5));
     *c = 1 / pow((t * t + 1), 0.5);
     *s = (*c) * t;
+
+    return setPivotMatrix(*rowPivot, *colPivot, *c, *s, mat -> rows);
 }
 
 void findLargestCell(matrix* mat, int *row, int *col) 
@@ -739,20 +754,36 @@ void findLargestCell(matrix* mat, int *row, int *col)
         {
             if (i == j)
                 continue;
-            if (abs(m[i][j]) > big) 
+            if (fabs(m[i][j]) > big) 
             {
                 *row = i;
                 *col = j;
+                big = fabs(m[i][j]);
             }
         }
     }
-    
 }
 
-void calcNextJacobiMatrix(matrix* matA, matrix* matB, double c, double s, int i, int j)
+matrix* setPivotMatrix(int row, int col, double c, double s, int dim)
+{
+    matrix* pivot;
+
+    pivot = formMatI(dim);
+    pivot->data[row][row] = c;
+    pivot->data[row][col] = s;
+    pivot->data[col][row] = -s;
+    pivot->data[col][col] = c;
+
+    return pivot;
+}
+
+matrix* calcNextJacobiMatrix(matrix* matA, double c, double s, int i, int j)
 {
     int r;
     double **a, **b;
+    matrix* matB;
+
+    matB = copyMatrix(matA);
 
     a = matA -> data;
     b = matB -> data;
@@ -762,7 +793,10 @@ void calcNextJacobiMatrix(matrix* matA, matrix* matB, double c, double s, int i,
         if(r != i && r!= j)
         {
             b[r][i] = c*a[r][i] - s*a[r][j];
+            b[i][r] = c*a[r][i] - s*a[r][j];
+
             b[r][j] = c*a[r][j] + s*a[r][i];
+            b[j][r] = c*a[r][j] + s*a[r][i];
         }
     }
 
@@ -770,6 +804,8 @@ void calcNextJacobiMatrix(matrix* matA, matrix* matB, double c, double s, int i,
     b[j][j] = s*s*a[i][i] + c*c*a[j][j] + 2*s*c*a[i][j];
     b[i][j] = 0;
     b[j][i] = 0;
+
+    return matB;
 }
 
 int hasConvergence(matrix* matA, matrix* matB)
@@ -804,13 +840,13 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors)
     vectorsIndices = eigenGapHeuristic(eigenValues, &k);
     finalVectors = newMatrix(eigenVectors->rows, k);
 
-    for (i = 0; i < eigenVectors->rows; i++)
+    for (j = 0; j < k; j++)
     {
-        for (j = 0; j < k; i++)
+        for (i = 0; i < eigenVectors->rows; i++)
         {
             finalVectors->data[i][j] = eigenVectors->data[i][vectorsIndices[j]];
-        } 
-    }
+        }
+    }        
     return finalVectors;
 }
 
@@ -843,7 +879,7 @@ int* eigenGapHeuristic(matrix* matA, int* k)
 
 int findMaxGap(eigenVal* values, int length)
 {
-    double currDiff, maxDiff = 0;
+    double currDiff, maxDiff = -1;
     int i, k;
     for (i = 0; i < (length-1) / 2; i++)
     {
@@ -854,7 +890,7 @@ int findMaxGap(eigenVal* values, int length)
             k = i;
         }
     }
-    return k;
+    return k + 1;
 }
 
 int isDiagonal(matrix* m)
@@ -906,9 +942,40 @@ void freeMatrix(matrix * m)
     free(m);
 }
 
+matrix* copyMatrix(matrix* m)
+{
+    matrix* newMat;
+    int i,j;
+
+    newMat = newMatrix(m->rows, m->columns);
+
+    for (i = 0; i < m -> rows; i++)
+    {
+        for (j = 0; j < m->columns; j++)
+        {
+            newMat->data[i][j] = m->data[i][j];
+        }
+        
+    }
+    return newMat;
+}
+
+void printMatrix(matrix* A) {
+    int i, j;
+    printf("===================\n");
+    for (i = 0; i < A->rows; i++)
+    {
+        for (j = 0; j < A->columns; j++)
+        {
+            printf("%.4f    ", A->data[i][j]);
+        }
+        printf("\n");
+    }
+}
+
 int compareEigenVal(const void * a, const void * b)
 {
-    return ( ((eigenVal*)b)->value - ((eigenVal*)a)->value );
+    return ( ((eigenVal*)a)->value - ((eigenVal*)b)->value );
 }
 
 
