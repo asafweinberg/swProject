@@ -697,13 +697,13 @@ matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) /
 }
 
 
-void jacobiAlg(matrix* mat, matrix** eigenValues, matrix** eigenVectors)
+void jacobiAlg(matrix* lNorm, matrix** eigenValues, matrix** eigenVectors)
 {
     int iterations = 0, convergence = 0, rowPivot, colPivot;
     double c, s;
     matrix *matA, *matB, *pivot, *tempVectors;
 
-    matA = mat;
+    matA = lNorm;
     matB = newMatrix(matA -> rows, matA -> columns);
     tempVectors = formMatI(matA -> rows);
     // printMatrix(matA);
@@ -837,7 +837,7 @@ double calcOff(matrix* m)
     return off;
 }
 
-matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors)
+matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, int initialK)
 {
     int *vectorsIndices, k, i, j;
     matrix* finalVectors;
@@ -855,6 +855,7 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors)
     return finalVectors;
 }
 
+//TODO: handle initial k
 // returns an array of the final starting vectors
 int* eigenGapHeuristic(matrix* matA, int* k)
 {
@@ -873,12 +874,19 @@ int* eigenGapHeuristic(matrix* matA, int* k)
 
     qsort(values, length, sizeof(eigenVal), compareEigenVal);
 
-    *k = findMaxGap(values, length);
+    if (*k == 0)
+    {
+        *k = findMaxGap(values, length);
+    }
     vectorsIndices = (int*)calloc(*k, sizeof(int));
     for (i = 0; i < *k; i++)
     {
         vectorsIndices[i] = values[i].column;
     }
+
+    //TODO: free values function
+    free(values);
+
     return vectorsIndices;
 }
 
@@ -888,7 +896,7 @@ int findMaxGap(eigenVal* values, int length)
     int i, k;
     for (i = 0; i < (length-1) / 2; i++)
     {
-        currDiff = fabs(values[i].value - values[i].value);
+        currDiff = fabs(values[i].value - values[i + 1].value); //TODO: check the indices
         if(currDiff > maxDiff)
         {
             maxDiff = currDiff;
@@ -983,21 +991,18 @@ int compareEigenVal(const void * a, const void * b)
     return ( ((eigenVal*)a)->value - ((eigenVal*)b)->value );
 }
 
-
 double ** runSpk(int k, Node* points, int numOfPoints, int d)
 {   
     double** TDoubleArr;
     // cluster* clusters;
-    if(k==0)
-    {
-        //HANDLE THIS CASE AND CHANGE K
-    }
 
     if (numOfPoints <= k && k != 0)
     {
         printf("ERROR K>=N");
         assert(0);
     }
+
+//TODO: call getLnorm and then call getTmatFromLnorm and return 
 
     return TDoubleArr; // ADD THE REST OF THE FLOW
     // clusters = makeClustersSp(k,points,numOfPoints,d);
@@ -1029,6 +1034,11 @@ void runLnorm(Node* points, int numOfPoints, int d)
 void runJacobi(Node* points, int numOfPoints, int d)
 {
    //TODO
+}
+
+matrix* getTmatFromLnorm(matrix* lNorm, int k)
+{
+//TODO
 }
 
 double ** runMainFlow(int k, char* myGoal, char* fileName) //return T or NULL
