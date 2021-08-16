@@ -74,7 +74,7 @@ matrix* calcNextJacobiMatrix(matrix* matA, double c, double s, int i, int j);
 matrix* setPivotMatrix(int row, int col, double c, double s, int dim);
 int hasConvergence(matrix* matA, matrix* matB);
 double calcOff(matrix* m);
-matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, int initialK, int * finalK);
+matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, int initialK);
 int* eigenGapHeuristic(matrix* matA, int* k);
 int findMaxGap(eigenVal* values, int length);
 int isDiagonal(matrix* m);

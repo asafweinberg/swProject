@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     myGoal = argv[2];
     fileName = argv[3];
     
-    TDoubleArr = runMainFlow(k,myGoal,fileName, &finalK, &numOfPoints);
+    TDoubleArr = runMainFlow(k, myGoal, fileName, &finalK, &numOfPoints);
     
     if(TDoubleArr==NULL)
     {
@@ -385,8 +385,22 @@ void freeMemo(cluster* clusters, Node* points, int k, int numOfpoints)
         free(clusters[i].prevMean);
     }
     free(clusters);
-
+    //TODO: replace it with freePoints
     iter=points;
+    for (i=0 ; i<numOfpoints ; i++)
+    {
+        free(iter->data);
+        prevNode=iter;
+        iter=prevNode->next;
+        free(prevNode);
+    }
+}
+
+void freePoints(Node * points, int numOfpoints)
+{
+    Node* iter=points ,*prevNode=NULL;
+    int i;
+
     for (i=0 ; i<numOfpoints ; i++)
     {
         free(iter->data);
@@ -793,14 +807,14 @@ double calcOff(matrix* m)
     return off;
 }
 
-matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, int initialK, int * finalK)
+matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, int initialK)
 {
     int *vectorsIndices, k, i, j;
     matrix* finalVectors;
 
     vectorsIndices = eigenGapHeuristic(eigenValues, &k);
     finalVectors = newMatrix(eigenVectors->rows, k);
-    *finalK=k;
+    // *finalK=k;
 
     for (j = 0; j < k; j++)
     {
@@ -812,7 +826,7 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, 
     return finalVectors;
 }
 
-//TODO: handle initial k
+
 // returns an array of the final starting vectors
 int* eigenGapHeuristic(matrix* matA, int* k)
 {
@@ -947,27 +961,25 @@ int compareEigenVal(const void * a, const void * b)
     return ( ((eigenVal*)a)->value - ((eigenVal*)b)->value );
 }
 
-double ** runSpk(int k, Node* points, int * numOfPoints, int d, int* finalK) //numOfPoints is updated correctly
+matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T nxk
 {   
-    double** TDoubleArr;
     matrix * eigenValues, *eigenVectors;
-    // cluster* clusters;
     matrix * lNorm, * matT;
 
-    if (*numOfPoints <= k && k != 0)
+    if (numOfPoints <= k && k != 0)
     {
-        printf("ERROR K>=N");
+        printf("ERROR K>=N");  //TODO check if need to free here
         assert(0);
     }
 
-    lNorm = runLnorm(points, *numOfPoints, d, false);
+    lNorm = runLnorm(points, numOfPoints, d, false);
     jacobiAlg(lNorm, & eigenValues, & eigenVectors); //lNorm is free here
-    matT = calcInitialVectorsFromJacobi(eigenValues, eigenVectors, k, finalK); //finalK is updated
-    TDoubleArr = matToArr(matT,true);
+    matT = calcInitialVectorsFromJacobi(eigenValues, eigenVectors, k); 
 
     freeMatrix(eigenValues);
     freeMatrix(eigenVectors);
-    return TDoubleArr; // numOfPoints and finalK are updated
+    freePoints(points,numOfPoints);
+    return matT; 
     
 }
 
@@ -975,18 +987,22 @@ void runWam(Node* points, int numOfPoints, int d)
 {
     matrix * m = formMatW(points,numOfPoints,d);
     printMatrix(m);
+    freeMatrix(m);
+    freePoints(points,numOfPoints);
 }
 
 void runDdG(Node* points, int numOfPoints, int d)
 {
     matrix * m = formMatW(points,numOfPoints,d);
-    m=formMatD(m,true); //may cause error
+    m=formMatD(m,true); //TODO to check may cause error
     printMatrix(m);
+    freeMatrix(m);
+    freePoints(points, numOfPoints);
 }
 
 matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat)
 {
-    matrix * m1,*m2,*m3;
+    matrix * m1, *m2, *m3;
     m1 = formMatW(points,numOfPoints,d);
     m2 = formMatD(m1,false);
     m3 = formMatLnorm(m2,m1,true,true);
@@ -994,18 +1010,31 @@ matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat)
     if(printMat)
     {
         printMatrix(m3);
+        freeMatrix(m3);
+        freePoints(points,numOfPoints);
+        return NULL;
     }
+
+    freePoints(points,numOfPoints);
     return m3;
 }
 
-void runJacobi(Node* points, int numOfPoints, int d)
+void runJacobi(Node* points, int numOfPoints, int d, int k)
 {
-   //TODO
-}
+//    double** TDoubleArr;
+    matrix * eigenValues, *eigenVectors;
+    // cluster* clusters;
+    matrix * lNorm;
 
-matrix* getTmatFromLnorm(matrix* lNorm, int k)
-{
-    
+    lNorm = runLnorm(points, numOfPoints, d, false);
+    jacobiAlg(lNorm, & eigenValues, & eigenVectors); //lNorm is free here
+
+    printMatrix(eigenValues);
+    printMatrix(eigenVectors);
+
+    freeMatrix(eigenValues);
+    freeMatrix(eigenVectors); 
+    freePoints(points,numOfPoints);
 }
 
 double ** matToArr(matrix * m, int free1)
@@ -1033,15 +1062,21 @@ double ** matToArr(matrix * m, int free1)
 
 double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* numOfPoints) //return T or NULL
 {
-    int maxIter = 300, d;
+    int d;
     Node* points;
-    cluster* clusters;
+    matrix * T;
+    double ** TDoubleArr;
 
     points = getPoints(fileName, numOfPoints, &d); //numOfpoints updated
 
     if(!strcmp(myGoal,"spk")) //returns T
     {
-        return runSpk(k, points, numOfPoints, d, finalK); //returns double **
+        T = runSpk(k, points, *numOfPoints, d); //returns matrix *
+        *finalK=T->columns;
+        *numOfPoints=T->rows;
+
+        TDoubleArr = matToArr(T,true);
+        return TDoubleArr;
     }
 
 
@@ -1060,15 +1095,27 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
     if(!strcmp(myGoal,"lnorm"))
     {
         runLnorm(points, *numOfPoints, d, false);
+        free(points);
         return NULL;
 
     }
 
     if(!strcmp(myGoal,"jacobi"))
     {
-        runJacobi(points, *numOfPoints,d);
+        runJacobi(points, *numOfPoints, d, k);
         return NULL;
     }
+}
+
+void printMatOutput(matrix *m) //TODO check if it's according to rules and change in all run funcs
+{
+    for (int i=0 ; i<m->rows ; i++){
+        for (int j=0 ; j< m->columns ;j++ ){
+            printf("%.4f,",m->data[i][j]);
+        }
+        printf("\n");
+    }
+    
 }
 
 

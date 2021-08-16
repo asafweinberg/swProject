@@ -535,7 +535,7 @@ void testEigen(int isDebug) {
     jacobiAlg(A, &V, &Vectors);
     printMatrix(V);
     printMatrix(Vectors);
-    eigens = calcInitialVectorsFromJacobi(V, Vectors,0,&i); //TODO change this
+    eigens = calcInitialVectorsFromJacobi(V, Vectors,0); //TODO change this
     testResult = true;
     printMatrix(eigens);
     for(i = 0; i < 3; i++) {
