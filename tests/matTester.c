@@ -535,7 +535,7 @@ void testEigen(int isDebug) {
     jacobiAlg(A, &V, &Vectors);
     printMatrix(V);
     printMatrix(Vectors);
-    eigens = calcInitialVectorsFromJacobi(V, Vectors);
+    eigens = calcInitialVectorsFromJacobi(V, Vectors,0,&i); //TODO change this
     testResult = true;
     printMatrix(eigens);
     for(i = 0; i < 3; i++) {
@@ -700,10 +700,10 @@ Node* pointsArrToList(double **pointsArr, int n)
     return start;
 }
 
-int main() {
-    testMain(true);
+// int main() {
+//     testMain(true);
     
-    // testReadPoints(false, path);
+//     // testReadPoints(false, path);
     
-    return 0;
-}
+//     return 0;
+// }

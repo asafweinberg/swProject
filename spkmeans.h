@@ -74,7 +74,7 @@ matrix* calcNextJacobiMatrix(matrix* matA, double c, double s, int i, int j);
 matrix* setPivotMatrix(int row, int col, double c, double s, int dim);
 int hasConvergence(matrix* matA, matrix* matB);
 double calcOff(matrix* m);
-matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors);
+matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, int initialK, int * finalK);
 int* eigenGapHeuristic(matrix* matA, int* k);
 int findMaxGap(eigenVal* values, int length);
 int isDiagonal(matrix* m);
@@ -83,8 +83,10 @@ void printMatrix(matrix* A);
 
 
 int compareEigenVal(const void * a, const void * b);
+matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat);
+double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* numOfPoints); //return T or NULL
+ 
 
-double ** runMainFlow(int k, char* myGoal, char* fileName); //return T or NULL
-
-Node* getPointsFromT(double ** TDoubleArr);
-cluster * getClustersFromT(double ** TDoubleArr);
+Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints);
+cluster * getClustersFromT(double ** TDoubleArr, int finalK);
+double ** matToArr(matrix * m, int free1);

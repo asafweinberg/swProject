@@ -3,13 +3,13 @@
 
 int main(int argc, char *argv[])
 {
-    //handle all goals
-    int k,d, numOfPoints;
+    
+    int k, d, numOfPoints;
     char* myGoal;
     char* fileName;
     double ** TDoubleArr;
     int maxIter=300;
-    // int maxIter = 300, numOfPoints, d;
+    int finalK;
     Node* points;
     cluster* clusters;
     
@@ -17,49 +17,36 @@ int main(int argc, char *argv[])
     k = atoi(argv[1]);
     myGoal = argv[2];
     fileName = argv[3];
-  
-  //  printf("%d",argc);
- //   printf("%d",maxIter);
-    // k = 3;
-    // fileName = "input_1.txt";
-    // maxIter=600;
     
-    TDoubleArr = runMainFlow(k,myGoal,fileName);
-
+    TDoubleArr = runMainFlow(k,myGoal,fileName, &finalK, &numOfPoints);
+    
     if(TDoubleArr==NULL)
     {
         return 0;
     }
-    
-    // points = getPoints(fileName, &numOfPoints, &d);
 
-    // printClusters(clusters, k, d);
-
-    k=len(TDoubleArr[0]);
-    d=k;
-    numOfPoints=len(TDoubleArr);
-    clusters=getClustersFromT(TDoubleArr);
-    points=getPointsFromT(TDoubleArr);
+    d=finalK;
+    clusters=getClustersFromT(TDoubleArr,finalK);
+    points=getPointsFromT(TDoubleArr,d,numOfPoints);
 
     doKmeans(clusters,points,d,k,numOfPoints, maxIter);
     freeMemo(clusters,points,k,numOfPoints);
     return 0;
 }
 
-Node* getPointsFromT(double ** TDoubleArr)
+Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
 {
-    int d,i,j;
+    int i,j;
     double number;
     double* point;
     Node* points, *current;
-    int numPoints=len(TDoubleArr);
-    d=len(TDoubleArr[0]);
+   
 
     points = (Node*)malloc(sizeof(Node));
     assert(points);
     current=points;
 
-    for (i=0 ; i<numPoints ; i++)
+    for (i=0 ; i<numOfpoints ; i++)
     {
        point=(double*)calloc(d,sizeof(double));
        assert(point);
@@ -74,16 +61,15 @@ Node* getPointsFromT(double ** TDoubleArr)
     return points;
 }
 
-cluster * getClustersFromT(double ** TDoubleArr)
+cluster * getClustersFromT(double ** TDoubleArr, int finalK)
 {
     cluster* clusters;
-    int i,j,k,d;
-    k=len(TDoubleArr[0]);
-    d=k;
-    clusters=(cluster *)calloc(k, sizeof(cluster));
+    int i,j,d;
+    d=finalK;
+    clusters=(cluster *)calloc(finalK, sizeof(cluster));
     assert(clusters);
 
-    for(i=0; i<k; i++)
+    for(i=0; i<finalK; i++)
     {
         clusters[i].mean = (double*)calloc(d, sizeof(double));
         assert(clusters[i].mean);
@@ -434,36 +420,6 @@ void printLst(Node* lst, int d)
     
 }
 
-/*
-cluster* makeClusters(int k, int d , PyObject ** centroids)
-{
-    cluster* clusters;
-    PyListObject *item;
-    PyFloatObject *pointDouble;
-    int i,j;
-
-    clusters=(cluster *)calloc(k, sizeof(cluster));
-    assert(clusters);
-
-    for(i=0; i<k; i++)
-    {
-        clusters[i].mean = (double*)calloc(d, sizeof(double));
-        assert(clusters[i].mean);
-        clusters[i].prevMean = (double*)calloc(d,sizeof(double));
-        assert(clusters[i].prevMean);
-        
-        item = (PyListObject *) PyList_GetItem((PyObject *)centroids, i);
-        for(j=0; j<d; j++)
-        {   
-            pointDouble = (PyFloatObject *) PyList_GET_ITEM(item,j);
-            double value = PyFloat_AS_DOUBLE(pointDouble);
-            clusters[i].prevMean[j] = value;
-        }
-        clusters[i].size=0;
-    }
-    return clusters;
-}
-*/
 cluster* makeClustersSp(int k, Node* points, int numOfPoints,int d)
 {
     // assumption: k is already calculated correctly if it was 0 before
@@ -837,13 +793,14 @@ double calcOff(matrix* m)
     return off;
 }
 
-matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, int initialK)
+matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, int initialK, int * finalK)
 {
     int *vectorsIndices, k, i, j;
     matrix* finalVectors;
 
     vectorsIndices = eigenGapHeuristic(eigenValues, &k);
     finalVectors = newMatrix(eigenVectors->rows, k);
+    *finalK=k;
 
     for (j = 0; j < k; j++)
     {
@@ -884,7 +841,6 @@ int* eigenGapHeuristic(matrix* matA, int* k)
         vectorsIndices[i] = values[i].column;
     }
 
-    //TODO: free values function
     free(values);
 
     return vectorsIndices;
@@ -991,21 +947,27 @@ int compareEigenVal(const void * a, const void * b)
     return ( ((eigenVal*)a)->value - ((eigenVal*)b)->value );
 }
 
-double ** runSpk(int k, Node* points, int numOfPoints, int d)
+double ** runSpk(int k, Node* points, int * numOfPoints, int d, int* finalK) //numOfPoints is updated correctly
 {   
     double** TDoubleArr;
+    matrix * eigenValues, *eigenVectors;
     // cluster* clusters;
+    matrix * lNorm, * matT;
 
-    if (numOfPoints <= k && k != 0)
+    if (*numOfPoints <= k && k != 0)
     {
         printf("ERROR K>=N");
         assert(0);
     }
 
-//TODO: call getLnorm and then call getTmatFromLnorm and return 
+    lNorm = runLnorm(points, *numOfPoints, d, false);
+    jacobiAlg(lNorm, & eigenValues, & eigenVectors); //lNorm is free here
+    matT = calcInitialVectorsFromJacobi(eigenValues, eigenVectors, k, finalK); //finalK is updated
+    TDoubleArr = matToArr(matT,true);
 
-    return TDoubleArr; // ADD THE REST OF THE FLOW
-    // clusters = makeClustersSp(k,points,numOfPoints,d);
+    freeMatrix(eigenValues);
+    freeMatrix(eigenVectors);
+    return TDoubleArr; // numOfPoints and finalK are updated
     
 }
 
@@ -1022,13 +984,18 @@ void runDdG(Node* points, int numOfPoints, int d)
     printMatrix(m);
 }
 
-void runLnorm(Node* points, int numOfPoints, int d)
+matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat)
 {
     matrix * m1,*m2,*m3;
     m1 = formMatW(points,numOfPoints,d);
     m2 = formMatD(m1,false);
     m3 = formMatLnorm(m2,m1,true,true);
-    printMatrix(m3);
+    
+    if(printMat)
+    {
+        printMatrix(m3);
+    }
+    return m3;
 }
 
 void runJacobi(Node* points, int numOfPoints, int d)
@@ -1038,45 +1005,68 @@ void runJacobi(Node* points, int numOfPoints, int d)
 
 matrix* getTmatFromLnorm(matrix* lNorm, int k)
 {
-//TODO
+    
 }
 
-double ** runMainFlow(int k, char* myGoal, char* fileName) //return T or NULL
+double ** matToArr(matrix * m, int free1)
 {
-    int maxIter = 300, numOfPoints, d;
+    double ** arr;
+    int i,j;
+
+    arr=calloc(m->rows,sizeof(double*));
+    assert(arr);
+    for(i=0 ; i<m->rows ; i++)
+    {
+        arr[i]=calloc(m->columns,sizeof(double));
+        assert(arr[i]);
+        for(j=0 ; j<m->columns ; j++)
+        {
+            arr[i][j]=m->data[i][j];
+        }
+    }
+    if(free1)
+    {
+        freeMatrix(m);
+    }
+    return arr;
+}
+
+double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* numOfPoints) //return T or NULL
+{
+    int maxIter = 300, d;
     Node* points;
     cluster* clusters;
 
-    points = getPoints(fileName, &numOfPoints, &d);
+    points = getPoints(fileName, numOfPoints, &d); //numOfpoints updated
 
     if(!strcmp(myGoal,"spk")) //returns T
     {
-        return runSpk(k,points,numOfPoints,d); //returns double **
+        return runSpk(k, points, numOfPoints, d, finalK); //returns double **
     }
 
 
     if(!strcmp(myGoal,"wam"))
     {
-        runWam(points,numOfPoints,d);
+        runWam(points, *numOfPoints, d);
         return NULL;
     }
 
     if(!strcmp(myGoal,"ddg"))
     {
-        runDdG(points,numOfPoints,d);
+        runDdG(points, *numOfPoints, d);
         return NULL;
     }
 
     if(!strcmp(myGoal,"lnorm"))
     {
-        runLnorm(points,numOfPoints,d);
+        runLnorm(points, *numOfPoints, d, false);
         return NULL;
 
     }
 
     if(!strcmp(myGoal,"jacobi"))
     {
-        runJacobi(points,numOfPoints,d);
+        runJacobi(points, *numOfPoints,d);
         return NULL;
     }
 }
