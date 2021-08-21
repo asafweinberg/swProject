@@ -17,7 +17,8 @@ int main(int argc, char *argv[])
     k = atoi(argv[1]);
     myGoal = argv[2];
     fileName = argv[3];
-    
+    // printf(fileName);
+
     TDoubleArr = runMainFlow(k, myGoal, fileName, &finalK, &numOfPoints);
     
     if(TDoubleArr==NULL)
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
 Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
 {
     int i,j;
-    double number;
+    // double number;
     double* point;
     Node* points, *current;
    
@@ -55,7 +56,7 @@ Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
        { 
            point[j]=TDoubleArr[i][j];
        }
-       current=addNext(current, point);
+       current=addCurrentNext(current, point);
     }
 
     return points;
@@ -82,6 +83,9 @@ cluster * getClustersFromT(double ** TDoubleArr, int finalK)
         }
         clusters[i].size=0;
     }
+    // printf("--------------------------\n");
+    // printClusters(clusters, finalK, finalK);
+
     return clusters;
 }
 
@@ -98,7 +102,7 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
     
     myfile = fopen(fileName, "r");
 
-    fscanf(myfile, "%lf%c", &number, &c);
+    // fscanf(myfile, "%lf%c", &number, &c);
 
     //first number in first point
     fscanf(myfile, "%lf%c", &number, &c);
@@ -253,6 +257,7 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
         convergence = checkCon(clusters, k, d);
         iterateClusters(clusters, k, d);
     }
+    printClusters(clusters, k, d);
 }
 
 
@@ -349,7 +354,21 @@ Node* addNext(Node* node, double* point)
 
 
     new->next = NULL;
-    node->data = point;
+    new->data = point; //TODO check that doesnt harm anything else
+
+    node->next = new;
+    return new;
+}
+
+Node* addCurrentNext(Node* node, double* point) 
+{
+    Node* new;
+    new = (Node*)calloc(1,sizeof(Node));
+    assert(new);
+
+
+    new->next = NULL;
+    node->data = point; 
 
     node->next = new;
     return new;
@@ -472,16 +491,17 @@ matrix* formMatD(matrix* matW, int freeW)
     matrix* matD;
     double sumW;
 
-    matD=calloc(1,sizeof(matrix));
-    matD->rows=matW->rows;
-    matD->columns=matW->columns;
-    matD->data=calloc(matW->rows, sizeof(double*));
+    matD=newMatrix(matW->rows,matW->columns);
+    // matD=calloc(1,sizeof(matrix));
+    // matD->rows=matW->rows;
+    // matD->columns=matW->columns;
+    // matD->data=calloc(matW->rows, sizeof(double*));
 
-    for (i = 0; i < matW->rows; i++)
+    for (i = 0; i < matD->rows; i++)
     {
-        matD->data[i] = calloc(matW->columns, sizeof(double));
+        // matD->data[i] = calloc(matW->columns, sizeof(double));
 
-        for (j = 0 ; j<matW->columns ; j++)
+        for (j = 0 ; j<matD->columns ; j++)
         {
             if (i==j)
             {
@@ -501,7 +521,7 @@ matrix* formMatD(matrix* matW, int freeW)
 
     if(freeW)
     {
-        free(matW);
+        freeMatrix(matW);
     }
 
     return matD;
@@ -512,20 +532,21 @@ matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW)
     matrix *lnormMat, *IMat, *rootD;
 
     IMat = formMatI(matD->rows);
-    rootD = minusRootMat(matD, false);
+    rootD = minusRootMat(matD, false); //matD will be free later if needed
 
-    lnormMat = rootD;
-    lnormMat = mulMatrices(lnormMat, matW, false, true); //dont free lnorm cause it points to rootD
-    lnormMat = mulMatrices(lnormMat, rootD, true, true);
-    lnormMat = addMatrices(IMat, lnormMat ,true, true, true);
+//    lnormMat = rootD;
+    lnormMat = mulMatrices(rootD, matW, false, false); //matW will be free later if needed
+    lnormMat = mulMatrices(lnormMat, rootD, true, true); //rootD is free here
+    lnormMat = addMatrices(IMat, lnormMat ,true, true, true); //IMat is free here
+
 
     if(freeD)
     {
-        free(matD);
+        freeMatrix(matD);
     }
     if(freeW)
     {
-        free(matW);
+        freeMatrix(matW);
     }
 
 
@@ -547,7 +568,7 @@ matrix* minusRootMat(matrix* mat, int free1)
 
     if(free1)
     {
-        free(mat);
+        freeMatrix(mat);
     }
     return newMat;
 }
@@ -589,7 +610,7 @@ matrix* pointsToMat(Node* points, int numOfPoints, int d)
     {   
         for(j = 0 ; j < d ; j++)
         {
-            pointsMat->data[i][j] = current->data[j];
+            pointsMat->data[i][j] = (current->data[j]);
         }
         current = current->next;
     }
@@ -812,6 +833,8 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, 
     int *vectorsIndices, k, i, j;
     matrix* finalVectors;
 
+    k=initialK;
+
     vectorsIndices = eigenGapHeuristic(eigenValues, &k);
     finalVectors = newMatrix(eigenVectors->rows, k);
     // *finalK=k;
@@ -979,6 +1002,7 @@ matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T 
     freeMatrix(eigenValues);
     freeMatrix(eigenVectors);
     freePoints(points,numOfPoints);
+//    printMatrix(matT);
     return matT; 
     
 }
@@ -1015,7 +1039,7 @@ matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat)
         return NULL;
     }
 
-    freePoints(points,numOfPoints);
+//    freePoints(points,numOfPoints); if it reaches this line spk/jacobi called the function
     return m3;
 }
 
@@ -1063,6 +1087,7 @@ double ** matToArr(matrix * m, int free1)
 double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* numOfPoints) //return T or NULL
 {
     int d;
+    int i,j; //TOTO delete
     Node* points;
     matrix * T;
     double ** TDoubleArr;
@@ -1075,7 +1100,17 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
         *finalK=T->columns;
         *numOfPoints=T->rows;
 
-        TDoubleArr = matToArr(T,true);
+        TDoubleArr = matToArr(T,false); // TODO change T is free here
+        // printf("--------------------------");
+        // for(i=0 ; i<T->rows ; i++)
+        // {
+        //     for(j=0 ; j<T->columns ; j++)
+        //     {
+        //         printf("%.4f,", TDoubleArr[i][j]);
+        //     }
+        //     printf("\n");
+        // }
+        
         return TDoubleArr;
     }
 
@@ -1094,8 +1129,7 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
 
     if(!strcmp(myGoal,"lnorm"))
     {
-        runLnorm(points, *numOfPoints, d, false);
-        free(points);
+        runLnorm(points, *numOfPoints, d, true);
         return NULL;
 
     }

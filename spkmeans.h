@@ -30,7 +30,7 @@ typedef struct{
     int column;
 } eigenVal;
 
-enum goal{spk,wam,ddg,lnorm,jacobi};
+//enum goal{spk,wam,ddg,lnorm,jacobi};
 
 #define true 1
 #define false 0
@@ -38,7 +38,7 @@ enum goal{spk,wam,ddg,lnorm,jacobi};
 #define epsilon 0.001
 
 
-void testPrint(char arr[]);
+//void testPrint(char arr[]);
 double ** kmeansFunc(int k, int maxIter, int numOfPoints, int d, Node* pointsMatrix, cluster* centroids);
 Node* getPoints(char* fileName, int* numOfPoints, int* finald);
 
@@ -50,6 +50,7 @@ double calcDistance(double* p1, double* p2, int d);
 void addPoint(cluster c, double* point, int d);
 int checkCon(cluster* clusters, int k, int d);
 Node* addNext(Node* node, double* point);
+Node* addCurrentNext(Node* node, double* point);
 void printClusters(cluster* clusters, int k, int d);
 void freeMemo(cluster* clusters, Node* points, int k, int numOfpoints);
 
