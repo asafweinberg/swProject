@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     points=getPointsFromT(TDoubleArr,d,numOfPoints);
 
     doKmeans(clusters,points,d,k,numOfPoints, maxIter);
+    printClusters(clusters, k, d);
     freeMemo(clusters,points,k,numOfPoints);
     return 0;
 }
@@ -257,7 +258,7 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
         convergence = checkCon(clusters, k, d);
         iterateClusters(clusters, k, d);
     }
-    printClusters(clusters, k, d);
+    
 }
 
 
@@ -699,7 +700,7 @@ void jacobiAlg(matrix* lNorm, matrix** eigenValues, matrix** eigenVectors)
     tempVectors = formMatI(matA -> rows);
     // printMatrix(matA);
 
-    while (!isDiagonal(matA) && ++iterations <= MaxJacobiIter && !convergence)
+    while (!isDiagonal(matA) && ++iterations <= MaxJacobiIter && !convergence) 
     {
         pivot = getRotationMatrixValues(matA, &c, &s, &rowPivot, &colPivot);
         // printMatrix(pivot);
@@ -865,7 +866,13 @@ int* eigenGapHeuristic(matrix* matA, int* k)
         values[i].column = i;
         values[i].value = matA->data[i][i];
     }
-
+    
+    int u;
+    for (u=0 ; u<length ; u++)
+    {
+        printf("%.4f,",values[u].value);
+    }
+    printf("---------------------");
     qsort(values, length, sizeof(eigenVal), compareEigenVal);
 
     if (*k == 0)
@@ -885,6 +892,13 @@ int* eigenGapHeuristic(matrix* matA, int* k)
 
 int findMaxGap(eigenVal* values, int length)
 {
+    int u;
+    for (u=0 ; u<length ; u++)
+    {
+        printf("%.4f,",values[u].value);
+    }
+    
+
     double currDiff, maxDiff = -1;
     int i, k;
     for (i = 0; i < (length-1) / 2; i++)
@@ -981,6 +995,12 @@ void printMatrix(matrix* A) {
 
 int compareEigenVal(const void * a, const void * b)
 {
+
+    if (((eigenVal*)a) -> value == ((eigenVal*)b)->value )
+    {
+        return ( ( (eigenVal*)a)->column - ((eigenVal*)b)->column );
+    }
+
     return ( ((eigenVal*)a)->value - ((eigenVal*)b)->value );
 }
 
@@ -1024,14 +1044,14 @@ void runDdG(Node* points, int numOfPoints, int d)
     freePoints(points, numOfPoints);
 }
 
-matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat)
+matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat0)
 {
     matrix * m1, *m2, *m3;
     m1 = formMatW(points,numOfPoints,d);
     m2 = formMatD(m1,false);
     m3 = formMatLnorm(m2,m1,true,true);
     
-    if(printMat)
+    if(printMat0)
     {
         printMatrix(m3);
         freeMatrix(m3);
@@ -1141,7 +1161,7 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
     }
 }
 
-void printMatOutput(matrix *m) //TODO check if it's according to rules and change in all run funcs
+void printMatOutput(matrix *m) //TODO check if it's according to rules and replace with printMatrix
 {
     for (int i=0 ; i<m->rows ; i++){
         for (int j=0 ; j< m->columns ;j++ ){

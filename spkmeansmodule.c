@@ -4,6 +4,7 @@
 
 
 static PyObject *runCFlow(PyObject *self, PyObject *args);
+static PyObject *kmeansClustering(PyObject *self, PyObject *args);
 cluster* makeClusters(int k, int d, PyObject ** centroids);
 Node* getPointsMatrix(int d, int n, PyObject ** pointsMatrix);
 
@@ -24,7 +25,7 @@ static PyObject *runCFlow(PyObject *self, PyObject *args)
 
     if (newPoints==NULL)
     {
-        return Py_BuildValue("O", NULL); //may cause error
+        return Py_BuildValue("O", PyList_New(0)); //may cause error
     }
 
     wrapList = PyList_New(0);
@@ -134,7 +135,7 @@ Node* getPointsMatrix(int d, int n, PyObject** pointsMatrix)
             double value = PyFloat_AS_DOUBLE(pointDouble);
             point[j] = value;
         }
-        current = addNext(current, point);
+        current = addCurrentNext(current, point);
     }
 
     return points;
@@ -162,13 +163,13 @@ static PyMethodDef Module_Methods[] = {
 
 static struct PyModuleDef Moduledef = {
     PyModuleDef_HEAD_INIT,
-    "mykmeanssp",     // name of module exposed to Python
+    "mySpkmeansModule",     // name of module exposed to Python
     NULL, // module documentation
     -1,
     Module_Methods
 };
 
-PyMODINIT_FUNC PyInit_mykmeanssp(void) {
+PyMODINIT_FUNC PyInit_mySpkmeansModule(void) {
     PyObject *m;
     m = PyModule_Create(&Moduledef);
     if(!m) {
