@@ -91,3 +91,13 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
 Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints);
 cluster * getClustersFromT(double ** TDoubleArr, int finalK);
 double ** matToArr(matrix * m, int free1);
+
+
+
+
+
+
+
+
+
+void printEigenArr(eigenVal * arr, int length); 

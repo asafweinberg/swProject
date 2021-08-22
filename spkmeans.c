@@ -30,9 +30,9 @@ int main(int argc, char *argv[])
     clusters=getClustersFromT(TDoubleArr,finalK);
     points=getPointsFromT(TDoubleArr,d,numOfPoints);
 
-    doKmeans(clusters,points,d,k,numOfPoints, maxIter);
-    printClusters(clusters, k, d);
-    freeMemo(clusters,points,k,numOfPoints);
+    doKmeans(clusters,points,d,finalK,numOfPoints, maxIter);
+    printClusters(clusters, finalK, d);
+    freeMemo(clusters,points,finalK,numOfPoints);
     return 0;
 }
 
@@ -807,7 +807,10 @@ matrix* calcNextJacobiMatrix(matrix* matA, double c, double s, int i, int j)
 
 int hasConvergence(matrix* matA, matrix* matB)
 {
-    return (calcOff(matA) - calcOff(matB)) <= epsilon;
+    double d1,d2;
+    d1=calcOff(matA);
+    d2=calcOff(matB);
+    return fabs(calcOff(matA) - calcOff(matB)) <= epsilon;
 }
 
 double calcOff(matrix* m)
@@ -866,15 +869,12 @@ int* eigenGapHeuristic(matrix* matA, int* k)
         values[i].column = i;
         values[i].value = matA->data[i][i];
     }
+
+    printEigenArr(values,length);
     
-    int u;
-    for (u=0 ; u<length ; u++)
-    {
-        printf("%.4f,",values[u].value);
-    }
-    printf("---------------------");
     qsort(values, length, sizeof(eigenVal), compareEigenVal);
 
+    printEigenArr(values,length);
     if (*k == 0)
     {
         *k = findMaxGap(values, length);
@@ -892,13 +892,7 @@ int* eigenGapHeuristic(matrix* matA, int* k)
 
 int findMaxGap(eigenVal* values, int length)
 {
-    int u;
-    for (u=0 ; u<length ; u++)
-    {
-        printf("%.4f,",values[u].value);
-    }
     
-
     double currDiff, maxDiff = -1;
     int i, k;
     for (i = 0; i < (length-1) / 2; i++)
@@ -995,13 +989,16 @@ void printMatrix(matrix* A) {
 
 int compareEigenVal(const void * a, const void * b)
 {
+    eigenVal* aPtr , *bPtr;
+    aPtr = (eigenVal*)a;
+    bPtr = (eigenVal*)b;
 
-    if (((eigenVal*)a) -> value == ((eigenVal*)b)->value )
+    if (aPtr -> value == bPtr -> value )
     {
-        return ( ( (eigenVal*)a)->column - ((eigenVal*)b)->column );
+        return aPtr->column - bPtr->column;
     }
 
-    return ( ((eigenVal*)a)->value - ((eigenVal*)b)->value );
+    return aPtr -> value < bPtr ->value ? -1 : 1 ;
 }
 
 matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T nxk
@@ -1119,7 +1116,7 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
         T = runSpk(k, points, *numOfPoints, d); //returns matrix *
         *finalK=T->columns;
         *numOfPoints=T->rows;
-
+        printMatrix(T);
         TDoubleArr = matToArr(T,false); // TODO change T is free here
         // printf("--------------------------");
         // for(i=0 ; i<T->rows ; i++)
@@ -1170,6 +1167,16 @@ void printMatOutput(matrix *m) //TODO check if it's according to rules and repla
         printf("\n");
     }
     
+}
+
+void printEigenArr(eigenVal * arr, int length)
+{
+    int u;
+    for (u=0 ; u<length ; u++)
+    {
+        printf("%.4f,",arr[u].value);
+    }
+    printf("\n");
 }
 
 
