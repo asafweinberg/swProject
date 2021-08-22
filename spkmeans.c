@@ -338,7 +338,7 @@ void iterateClusters(cluster* clusters, int length, int d)
     {
        prev = clusters[i].prevMean;
        clusters[i].prevMean = clusters[i].mean;
-        clusters[i].size = 0;
+       clusters[i].size = 0;
        free(prev);
     }
     for (i=0; i< length; i++)
@@ -380,6 +380,7 @@ void printClusters(cluster* clusters, int k, int d)
     int i, j;
     for(i=0 ; i<k ; i++)
     {
+        printf("  %d   ",clusters[i].size);
         for(j=0 ; j<d ; j++)
         {
             if(j!=d-1)
@@ -391,6 +392,7 @@ void printClusters(cluster* clusters, int k, int d)
               printf("%.4f\n",clusters[i].prevMean[j]);  
             }
         }
+        
     }
 }
 
@@ -484,6 +486,39 @@ matrix* formMatW(Node* points, int numOfPoints, int d)
     }
 
     return Wmat;
+}
+
+matrix* formMatT(matrix * matU, int free1)
+{
+    int i,j,l;
+    double sumSquare;
+    matrix * T = newMatrix(matU->rows , matU->columns);
+    for (i = 0 ; i<T->rows ; i++)
+    {
+        sumSquare=0;
+        for (l=0 ; l< T->columns ; l++)
+        {
+            sumSquare+=(matU->data[i][l]) * (matU->data[i][l]);
+        }
+        sumSquare= pow(sumSquare,0.5);
+
+        for (j = 0 ; j<T->columns ; j++)
+        {
+            if (matU->data[i][j]==0.0) //TODO check about 0
+            {
+                T->data[i][j]=0.0;
+            }
+            else
+            {
+                T->data[i][j]=(matU->data[i][j])/sumSquare;
+            }
+        }
+    }
+    if(free1)
+    {
+        freeMatrix(matU);
+    }
+    return T;
 }
 
 matrix* formMatD(matrix* matW, int freeW)
@@ -870,11 +905,11 @@ int* eigenGapHeuristic(matrix* matA, int* k)
         values[i].value = matA->data[i][i];
     }
 
-    printEigenArr(values,length);
+    // printEigenArr(values,length);
     
     qsort(values, length, sizeof(eigenVal), compareEigenVal);
 
-    printEigenArr(values,length);
+    // printEigenArr(values,length);
     if (*k == 0)
     {
         *k = findMaxGap(values, length);
@@ -1004,7 +1039,7 @@ int compareEigenVal(const void * a, const void * b)
 matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T nxk
 {   
     matrix * eigenValues, *eigenVectors;
-    matrix * lNorm, * matT;
+    matrix * lNorm, * matT, *matU;
 
     if (numOfPoints <= k && k != 0)
     {
@@ -1014,12 +1049,12 @@ matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T 
 
     lNorm = runLnorm(points, numOfPoints, d, false);
     jacobiAlg(lNorm, & eigenValues, & eigenVectors); //lNorm is free here
-    matT = calcInitialVectorsFromJacobi(eigenValues, eigenVectors, k); 
-
+    matU = calcInitialVectorsFromJacobi(eigenValues, eigenVectors, k); 
+    matT = formMatT(matU,true);
     freeMatrix(eigenValues);
     freeMatrix(eigenVectors);
     freePoints(points,numOfPoints);
-//    printMatrix(matT);
+    // printMatrix(matT);
     return matT; 
     
 }
@@ -1070,8 +1105,8 @@ void runJacobi(Node* points, int numOfPoints, int d, int k)
     lNorm = runLnorm(points, numOfPoints, d, false);
     jacobiAlg(lNorm, & eigenValues, & eigenVectors); //lNorm is free here
 
-    printMatrix(eigenValues);
-    printMatrix(eigenVectors);
+    // printMatrix(eigenValues);
+    // printMatrix(eigenVectors);
 
     freeMatrix(eigenValues);
     freeMatrix(eigenVectors); 
@@ -1116,7 +1151,7 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
         T = runSpk(k, points, *numOfPoints, d); //returns matrix *
         *finalK=T->columns;
         *numOfPoints=T->rows;
-        printMatrix(T);
+        // printMatrix(T);
         TDoubleArr = matToArr(T,false); // TODO change T is free here
         // printf("--------------------------");
         // for(i=0 ; i<T->rows ; i++)
