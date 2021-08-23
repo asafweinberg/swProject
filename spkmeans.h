@@ -102,3 +102,4 @@ void printEigenfromMat(matrix* m);
 
 
 void printEigenArr(eigenVal * arr, int length); 
+void printNodesList(Node * points, int d);

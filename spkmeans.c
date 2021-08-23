@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     int finalK;
     Node* points;
     cluster* clusters;
-    
+    int i,j;    
 
     k = atoi(argv[1]);
     myGoal = argv[2];
@@ -21,6 +21,19 @@ int main(int argc, char *argv[])
 
     TDoubleArr = runMainFlow(k, myGoal, fileName, &finalK, &numOfPoints);
     
+    // printf("\n ===================== MATRIX T\n");
+    // for(i=0 ; i<numOfPoints ; i++)
+    // {
+    //     for(j=0 ; j<finalK-1 ; j++)
+    //     {
+    //         printf("%.4f,",TDoubleArr[i][j]);
+    //     }
+    //     printf("%.4f\n",TDoubleArr[i][j]);
+
+    // }
+    // printf("\n ===================== END MATRIX T");
+
+
     if(TDoubleArr==NULL)
     {
         return 0;
@@ -59,7 +72,7 @@ Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
        }
        current=addCurrentNext(current, point);
     }
-
+    // printNodesList(points,d);
     return points;
 }
 
@@ -86,6 +99,7 @@ cluster * getClustersFromT(double ** TDoubleArr, int finalK)
     }
     // printf("--------------------------\n");
     // printClusters(clusters, finalK, finalK);
+    // printf("--------------------------\n");
 
     return clusters;
 }
@@ -244,20 +258,31 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
     Node* current=head;
     int convergence=false, count = 0, min, i;
     
+    // printNodesList(points,d);
+    printf("==================\n");
+    printClusters(clusters, k, d);
+    printf("==================\n");
     while(continueLoop(convergence, count, maxIteratiorns))
-    {
+    {   
         for (i = 0; i < numOfPoints; i++)
         {
             min = minCluster(current->data, clusters, k, d);
+            printf("%d, ",min);
             addPoint(clusters[min], current->data, d);
             clusters[min].size ++;
             current = current->next;
         }
+        printf("\n%d==================\n",i);
+        printClusters(clusters, k, d);
+        printf("==================\n");
+
         current = head;
         count++;
         convergence = checkCon(clusters, k, d);
         iterateClusters(clusters, k, d);
+        // printNodesList(points,d);
     }
+    printf("%d\n",count);
     
 }
 
@@ -290,6 +315,7 @@ double calcDistance(double* p1 , double* p2 ,int d)
     {
         dist+=(p1[i]-p2[i])*(p1[i]-p2[i]);
     }
+    dist=pow(dist,0.5);
     return dist;
 }
 
@@ -479,7 +505,7 @@ matrix* formMatW(Node* points, int numOfPoints, int d)
         {
             if(i != j)
             {
-                dis = pow(calcDistance(pointsMat->data[i], pointsMat->data[j], d), 0.5);
+                dis = calcDistance(pointsMat->data[i], pointsMat->data[j], d);
                 Wmat->data[i][j] = exp(-dis/2);
             }
         }
@@ -1161,8 +1187,8 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
         T = runSpk(k, points, *numOfPoints, d); //returns matrix *
         *finalK=T->columns;
         *numOfPoints=T->rows;
-        printMatrix(T);
-        printf("----\n");
+        // printMatrix(T);
+        // printf("----\n");
         TDoubleArr = matToArr(T,false); // TODO change T is free here
         // printf("--------------------------");
         // for(i=0 ; i<T->rows ; i++)
@@ -1225,4 +1251,19 @@ void printEigenArr(eigenVal * arr, int length)
     printf("\n");
 }
 
+void printNodesList(Node * points, int d)
+{
+    Node *iter=points;
+    int i;
+    printf("==============================\n");
+    while(iter->data!= NULL)
+    {
+        for (i=0 ; i< d-1 ;i++){
+            printf("%.4f,",iter->data[i]);
+        }
+        printf("%.4f\n",iter->data[i]);
+        iter=iter->next;
+    }
+    printf("==============================\n");
+}
 
