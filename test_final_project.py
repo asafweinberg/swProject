@@ -126,10 +126,10 @@ if __name__ == "__main__":
                     curr_file = lnorm_filename
                 else:
                     curr_file = vectors_filename
-                os.system(f"python spkmeans.py {k_value} {goal} {curr_file} > {result_file}")
+                os.system(f"py spkmeans.py {k_value} {goal} {curr_file} > {result_file}")
                 vectors = np.array(get_vectors(vectors_filename))
                 if goal == "spk":
-                    correct_matrix = get_vectors(f".\\tests\\test{index}_{goal}_{k_value}_output.txt")
+                    correct_matrix = get_vectors(f".\\tests\\test{index}_{goal}_{k_value}_output_P.txt")
                 else:
                     if goal == "wam":
                         correct_matrix = build_weight_matrix(vectors)
@@ -150,9 +150,10 @@ if __name__ == "__main__":
                 if check_equality(correct_matrix, result_matrix):
                     print("Test Passed")
                 else:
-                    print("Test Failed")
-                    print("Your output:")
-                    print_mat(result_matrix)
-                    print("correct output:")
-                    print_mat(correct_matrix)
+                    if not goal=="jacobi":
+                        print("Test Failed")
+                        print("Your output:")
+                        print_mat(result_matrix)
+                        print("correct output:")
+                        print_mat(correct_matrix)
 

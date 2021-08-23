@@ -380,7 +380,7 @@ void printClusters(cluster* clusters, int k, int d)
     int i, j;
     for(i=0 ; i<k ; i++)
     {
-        printf("  %d   ",clusters[i].size);
+        // printf("  %d   ",clusters[i].size);
         for(j=0 ; j<d ; j++)
         {
             if(j!=d-1)
@@ -1011,14 +1011,14 @@ matrix* copyMatrix(matrix* m)
 
 void printMatrix(matrix* A) {
     int i, j;
-    printf("===================\n");
+    // printf("===================\n");
     for (i = 0; i < A->rows; i++)
     {
-        for (j = 0; j < A->columns; j++)
+        for (j = 0; j < A->columns-1; j++) //TODO change
         {
-            printf("%.4f    ", A->data[i][j]);
+            printf("%.4f,", A->data[i][j]);
         }
-        printf("\n");
+        printf("%.4f\n", A->data[i][j]);
     }
 }
 
@@ -1105,12 +1105,22 @@ void runJacobi(Node* points, int numOfPoints, int d, int k)
     lNorm = runLnorm(points, numOfPoints, d, false);
     jacobiAlg(lNorm, & eigenValues, & eigenVectors); //lNorm is free here
 
-    // printMatrix(eigenValues);
-    // printMatrix(eigenVectors);
+    printEigenfromMat(eigenValues);
+    printMatrix(eigenVectors);
 
     freeMatrix(eigenValues);
     freeMatrix(eigenVectors); 
     freePoints(points,numOfPoints);
+}
+
+void printEigenfromMat(matrix* m)
+{
+    int i;
+    for(i=0 ; i<m->rows-1 ; i++)
+    {
+        printf("%.4f,",m->data[i][i]);  
+    }
+    printf("%.4f\n",m->data[i][i]);
 }
 
 double ** matToArr(matrix * m, int free1)
@@ -1151,7 +1161,8 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
         T = runSpk(k, points, *numOfPoints, d); //returns matrix *
         *finalK=T->columns;
         *numOfPoints=T->rows;
-        // printMatrix(T);
+        printMatrix(T);
+        printf("----\n");
         TDoubleArr = matToArr(T,false); // TODO change T is free here
         // printf("--------------------------");
         // for(i=0 ; i<T->rows ; i++)
