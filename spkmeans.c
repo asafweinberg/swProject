@@ -337,6 +337,9 @@ int checkCon(cluster* clusters, int k, int d)
     int i, j;
     for(i = 0; i < k; i++)
     {
+        // fix for garibi's way
+        if (clusters[i].size == 0)
+            continue;
         for(j = 0; j < d; j++)
         {
             if (clusters[i].mean[j] != clusters[i].prevMean[j])
@@ -359,18 +362,38 @@ void iterateClusters(cluster* clusters, int length, int d)
     double* prev;
     int i;
 
-    
+
+    //fix to garibi's way ********************
     for (i = 0; i < length; i++)
     {
-       prev = clusters[i].prevMean;
-       clusters[i].prevMean = clusters[i].mean;
+       if (clusters[i].size != 0) 
+       {
+            prev = clusters[i].prevMean;
+            clusters[i].prevMean = clusters[i].mean;
+            free(prev);
+       }
        clusters[i].size = 0;
-       free(prev);
     }
     for (i=0; i< length; i++)
     {
         clusters[i].mean = (double*)calloc(d, sizeof(double));
+        // TODO: assert calloc
     }
+
+    //our old way *******************
+
+    // for (i = 0; i < length; i++)
+    // {
+    //    prev = clusters[i].prevMean;
+    //    clusters[i].prevMean = clusters[i].mean;
+    //    clusters[i].size = 0;
+    //    free(prev);
+    // }
+    // for (i=0; i< length; i++)
+    // {
+    //     clusters[i].mean = (double*)calloc(d, sizeof(double));
+    //     // TODO: assert calloc
+    // }
 }
 
 Node* addNext(Node* node, double* point) 
