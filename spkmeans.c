@@ -259,22 +259,22 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
     int convergence=false, count = 0, min, i;
     
     // printNodesList(points,d);
-    printf("==================\n");
-    printClusters(clusters, k, d);
-    printf("==================\n");
+    // printf("==================\n");
+    // printClusters(clusters, k, d);
+    // printf("==================\n");
     while(continueLoop(convergence, count, maxIteratiorns))
     {   
         for (i = 0; i < numOfPoints; i++)
         {
             min = minCluster(current->data, clusters, k, d);
-            printf("%d, ",min);
+            // printf("%d, ",min);
             addPoint(clusters[min], current->data, d);
             clusters[min].size ++;
             current = current->next;
         }
-        printf("\n%d==================\n",i);
-        printClusters(clusters, k, d);
-        printf("==================\n");
+        // printf("\n%d==================\n",i);
+        // printClusters(clusters, k, d);
+        // printf("==================\n");
 
         current = head;
         count++;
@@ -282,7 +282,7 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
         iterateClusters(clusters, k, d);
         // printNodesList(points,d);
     }
-    printf("%d\n",count);
+    // printf("%d\n",count);
     
 }
 

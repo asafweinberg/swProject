@@ -110,9 +110,11 @@ def print_mat(matrix):
 
 
 if __name__ == "__main__":
-    goals = ["wam", "ddg", "lnorm", "jacobi", "spk"]
+    # goals = ["wam", "ddg", "lnorm", "jacobi", "spk"]
+    goals = ["jacobi"]
     result_file = "tmp.txt"
-    for index in range(10):
+    # for index in range(10):
+    for index in range(1):
         vectors_filename = f".\\tests\\test{index}.csv"
         lnorm_filename = f".\\tests\\test{index}_lnorm_output.txt"
         for goal in goals:
@@ -150,10 +152,10 @@ if __name__ == "__main__":
                 if check_equality(correct_matrix, result_matrix):
                     print("Test Passed")
                 else:
-                    if not goal=="jacobi":
-                        print("Test Failed")
-                        print("Your output:")
-                        print_mat(result_matrix)
-                        print("correct output:")
-                        print_mat(correct_matrix)
+                    # if not goal=="jacobi":
+                    print("Test Failed")
+                    print("Your output:")
+                    print_mat(result_matrix)
+                    print("correct output:")
+                    print_mat(correct_matrix)
 

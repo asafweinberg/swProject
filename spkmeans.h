@@ -35,7 +35,7 @@ typedef struct{
 #define true 1
 #define false 0
 #define MaxJacobiIter 100
-#define epsilon 0.001
+#define epsilon 0.000000000000001
 
 
 //void testPrint(char arr[]);
