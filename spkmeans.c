@@ -272,9 +272,6 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
             clusters[min].size ++;
             current = current->next;
         }
-        // printf("\n%d==================\n",i);
-        // printClusters(clusters, k, d);
-        // printf("==================\n");
 
         current = head;
         count++;
@@ -787,13 +784,11 @@ void jacobiAlg(matrix* lNorm, matrix** eigenValues, matrix** eigenVectors)
     while (!isDiagonal(matA) && ++iterations <= MaxJacobiIter && !convergence) 
     {
         pivot = getRotationMatrixValues(matA, &c, &s, &rowPivot, &colPivot);
-        // printMatrix(pivot);
         matB = calcNextJacobiMatrix(matA, c, s, rowPivot, colPivot); //TODO, make sure that matB changes
         tempVectors = mulMatrices(tempVectors, pivot, true, true);
         convergence = hasConvergence(matA, matB);
         freeMatrix(matA);
         matA = matB;
-        // printMatrix(matA);
     }
 
     *eigenValues = matA;
@@ -894,21 +889,21 @@ int hasConvergence(matrix* matA, matrix* matB)
     double d1,d2;
     d1=calcOff(matA);
     d2=calcOff(matB);
-    return fabs(calcOff(matA) - calcOff(matB)) <= epsilon;
+    return (fabs(d1 - d2) <= epsilon);
 }
 
 double calcOff(matrix* m)
 {
     // improving running time possibility by multipling the sum of half by 2 because of simetry
     int i, j;
-    double off = 0;
+    double off = 0.0;
     for ( i = 0; i < m ->rows; i++)
     {
         for (j = 0; j < m->columns; j++)
         {
             if(i != j)
             {
-                off += m->data[i][j];
+                off += pow(m->data[i][j],2);
             }
         }
         

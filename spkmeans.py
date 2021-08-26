@@ -43,10 +43,11 @@ def main(args):
     # fileName2 = args[filesIndex + 1]
     
     #reads the points from files
-
+    
     pointsNewDim=km.runCFlow(k,goal,fileName) #if not spk, then equals an empty list. if spk equals Tmat as list of lists
     if len(pointsNewDim)==0:
         return
+    
     # data, success = readDataSp(fileName) #returns panda
 
     # if(success == False):
