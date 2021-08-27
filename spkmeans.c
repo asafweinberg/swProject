@@ -945,7 +945,7 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
 
 
 /* -------------------------------------------- Kmeans Helpers Functions ------------------------------------------- */
-#pragma region Algorithm
+#pragma region Helpers
 
 int getMinCluster(double* point, cluster* clusters, int K, int d)
 {
@@ -1063,7 +1063,7 @@ void iterateClusters(cluster* clusters, int length, int d)
 }
 
 
-#pragma endregion Algorithm
+#pragma endregion Helpers
 
 
 
@@ -1307,22 +1307,8 @@ int main(int argc, char *argv[])
     k = atoi(argv[1]);
     myGoal = argv[2];
     fileName = argv[3];
-    // printf(fileName);
 
     TDoubleArr = runMainFlow(k, myGoal, fileName, &finalK, &numOfPoints);
-    
-    // printf("\n ===================== MATRIX T\n");
-    // for(i=0 ; i<numOfPoints ; i++)
-    // {
-    //     for(j=0 ; j<finalK-1 ; j++)
-    //     {
-    //         printf("%.4f,",TDoubleArr[i][j]);
-    //     }
-    //     printf("%.4f\n",TDoubleArr[i][j]);
-
-    // }
-    // printf("\n ===================== END MATRIX T");
-
 
     if(TDoubleArr == NULL)
     {
