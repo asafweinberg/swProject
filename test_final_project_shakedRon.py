@@ -226,7 +226,8 @@ if __name__ == "__main__":
 
     for row in filesToCreate.itertuples():
         k_orig = row.n_clusters
-        goals = ["spk", "ddg", "wam", "lnorm"]
+        # goals = ["spk", "ddg", "wam", "lnorm"]
+        goals = []
         input_data_filename = os.path.join(".", "tests", "test_data", "spk_tests", f"test{input_index}.csv")
         for ex in exec:
             for goal in goals:

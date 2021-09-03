@@ -60,13 +60,14 @@ matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T 
     }
 
     lNorm = runLnorm(points, numOfPoints, d, false);
-    jacobiAlg(lNorm, & eigenValues, & eigenVectors); //lNorm is free here
+    jacobiAlg(lNorm, &eigenValues, &eigenVectors); //lNorm is free here
     matU = calcInitialVectorsFromJacobi(eigenValues, eigenVectors, k); 
-    matT = formMatT(matU,true);
+    matT = formMatT(matU, true);
     freeMatrix(eigenValues);
     freeMatrix(eigenVectors);
     freePointsList(points,numOfPoints);
     // printMatrix(matT);
+    // printf("---------------------------------------------------------------------");
     return matT; 
     
 }
@@ -75,15 +76,17 @@ matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T 
 void runJacobi(Node* points, int numOfPoints, int d, int k)
 {
 //    double** TDoubleArr;
-    matrix * eigenValues, *eigenVectors;
+    matrix * eigenValues, *eigenVectors, *vectorsToPrint;
     // cluster* clusters;
     matrix * lNorm;
 
-    lNorm = runLnorm(points, numOfPoints, d, false);
-    jacobiAlg(lNorm, & eigenValues, & eigenVectors); //lNorm is free here
+    // lNorm = runLnorm(points, numOfPoints, d, false); // TODO: check which matrix to send
+    lNorm = pointsToMat(points, numOfPoints, d);
+    jacobiAlg(lNorm, &eigenValues, &eigenVectors); //lNorm is free here
 
     printEigenfromMat(eigenValues);
-    printMatrix(eigenVectors);
+    vectorsToPrint = transposeMatrix(eigenVectors, true);
+    printMatrix(vectorsToPrint);
 
     freeMatrix(eigenValues);
     freeMatrix(eigenVectors); 
@@ -280,18 +283,17 @@ void jacobiAlg(matrix* lNorm, matrix** eigenValues, matrix** eigenVectors)
     matA = lNorm;
     matB = newMatrix(matA -> rows, matA -> columns);
     tempVectors = formMatI(matA -> rows);
-    // printMatrix(matA);
 
     while (!isDiagonal(matA) && ++iterations <= MaxJacobiIter && !convergence) 
     {
         pivot = getRotationMatrixValues(matA, &c, &s, &rowPivot, &colPivot);
-        // printMatrix(pivot);
         matB = calcNextJacobiMatrix(matA, c, s, rowPivot, colPivot); //TODO, make sure that matB changes
+
         tempVectors = mulMatrices(tempVectors, pivot, true, true);
+
         convergence = hasJacobiConvergence(matA, matB);
         freeMatrix(matA);
         matA = matB;
-        // printMatrix(matA);
     }
 
     *eigenValues = matA;
@@ -677,7 +679,7 @@ matrix* newMatrix(int rows, int columns)
 }
 
 
-matrix* copyMatrix(matrix* m)
+matrix* copyMatrix(matrix* m) // TODO: check if need to free
 {
     matrix* newMat;
     int i,j;
@@ -692,6 +694,28 @@ matrix* copyMatrix(matrix* m)
         }
         
     }
+    return newMat;
+}
+
+matrix* transposeMatrix(matrix* m, int free) 
+{
+    matrix* newMat;
+    int i,j;
+
+    newMat = newMatrix(m->rows, m->columns);
+
+    for (i = 0; i < m -> rows; i++)
+    {
+        for (j = 0; j < m->columns; j++)
+        {
+            newMat->data[j][i] = m->data[i][j];
+        }
+        
+    }
+
+    if (free) 
+        freeMatrix(m);
+
     return newMat;
 }
 
@@ -912,32 +936,20 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
     Node* current=head;
     int convergence=false, count = 0, min, i;
     
-    // printNodesList(points,d);
-    // printf("==================\n");
-    // printClusters(clusters, k, d);
-    // printf("==================\n");
     while(continueLoop(convergence, count, maxIteratiorns))
     {   
         for (i = 0; i < numOfPoints; i++)
         {
             min = getMinCluster(current->data, clusters, k, d);
-            // printf("%d, ",min);
             addPointToCluster(clusters[min], current->data, d);
             clusters[min].size ++;
             current = current->next;
         }
-        // printf("\n%d==================\n",i);
-        // printClusters(clusters, k, d);
-        // printf("==================\n");
-
         current = head;
         count++;
         convergence = checkKmeansConvergence(clusters, k, d);
         iterateClusters(clusters, k, d);
-        // printNodesList(points,d);
     }
-    // printf("%d\n",count);
-    
 }
 
 
@@ -960,8 +972,8 @@ int getMinCluster(double* point, cluster* clusters, int K, int d)
         }
         if (distance < minDist)
         {
-            minDist=distance;
-            clusterIndex=i;
+            minDist = distance;
+            clusterIndex = i;
         }
     }
     return clusterIndex;
