@@ -79,7 +79,7 @@ matrix* formMatI(int dimention);
 int isDiagonal(matrix* m);
 matrix* newMatrix(int rows, int columns);
 matrix* copyMatrix(matrix* m);
-
+matrix* transposeMatrix(matrix* m, int free);
 
 /*---------------------------------------------------------------------------------------------------*/
 /* ******************************************** KMeans Functions ******************************************** */
