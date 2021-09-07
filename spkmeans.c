@@ -63,8 +63,8 @@ matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T 
     jacobiAlg(lNorm, &eigenValues, &eigenVectors); //lNorm is free here
     matU = calcInitialVectorsFromJacobi(eigenValues, eigenVectors, k); 
     matT = formMatT(matU, true);
-    freeMatrix(eigenValues);
-    freeMatrix(eigenVectors);
+    // freeMatrix(eigenValues);
+    // freeMatrix(eigenVectors);
     freePointsList(points,numOfPoints);
     // printMatrix(matT);
     // printf("---------------------------------------------------------------------");
@@ -176,28 +176,29 @@ matrix* formMatT(matrix * matU, int free1)
     int i,j,l;
     double sumSquare;
     matrix * T = newMatrix(matU->rows , matU->columns);
-    for (i = 0 ; i<T->rows ; i++)
+    for (i = 0; i < T->rows; i++)
     {
-        sumSquare=0;
-        for (l=0 ; l< T->columns ; l++)
+        sumSquare = 0;
+        for (l = 0; l < T->columns; l++)
         {
             sumSquare+=(matU->data[i][l]) * (matU->data[i][l]);
         }
-        sumSquare= pow(sumSquare,0.5);
+        sumSquare = pow(sumSquare, 0.5);
 
-        for (j = 0 ; j<T->columns ; j++)
+        for (j = 0; j < T->columns; j++)
         {
-            if (matU->data[i][j]==0.0) //TODO check about 0
+            if (matU->data[i][j] == 0.0) //TODO check about 0
             {
-                T->data[i][j]=0.0;
+                T->data[i][j] = 0.0;
             }
             else
             {
-                T->data[i][j]=(matU->data[i][j])/sumSquare;
+                T->data[i][j] = (matU->data[i][j])/sumSquare;
             }
         }
     }
-    if(free1)
+
+    if (free1)
     {
         freeMatrix(matU);
     }
@@ -281,7 +282,7 @@ void jacobiAlg(matrix* lNorm, matrix** eigenValues, matrix** eigenVectors)
     matrix *matA, *matB, *pivot, *tempVectors;
 
     matA = lNorm;
-    matB = newMatrix(matA -> rows, matA -> columns);
+    // matB = newMatrix(matA -> rows, matA -> columns);
     tempVectors = formMatI(matA -> rows);
 
     while (!isDiagonal(matA) && ++iterations <= MaxJacobiIter && !convergence) 
@@ -428,7 +429,7 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, 
     int *vectorsIndices, k, i, j;
     matrix* finalVectors;
 
-    k=initialK;
+    k = initialK;
 
     vectorsIndices = eigenGapHeuristic(eigenValues, &k);
     finalVectors = newMatrix(eigenVectors->rows, k);
@@ -440,7 +441,12 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, 
         {
             finalVectors->data[i][j] = eigenVectors->data[i][vectorsIndices[j]];
         }
-    }        
+    }
+
+    free(vectorsIndices);
+    freeMatrix(eigenValues);
+    freeMatrix(eigenVectors);
+
     return finalVectors;
 }
 
@@ -484,9 +490,8 @@ int* eigenGapHeuristic(matrix* matA, int* k)
 
 int findMaxGap(eigenVal* values, int length)
 {
-    
-    double currDiff, maxDiff = -1;
-    int i, k;
+    double currDiff = 0, maxDiff = -1.0;
+    int i, k = 0;
     for (i = 0; i < (length-1) / 2; i++)
     {
         currDiff = fabs(values[i].value - values[i + 1].value); //TODO: check the indices
@@ -743,12 +748,12 @@ Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
 
     for (i=0 ; i<numOfpoints ; i++)
     {
-       point=(double*)calloc(d,sizeof(double));
+       point = (double*)calloc(d,sizeof(double));
        assert(point);
 
-       for(j=0 ; j<d ; j++)
+       for(j = 0; j < d; j++)
        { 
-           point[j]=TDoubleArr[i][j];
+           point[j] = TDoubleArr[i][j];
        }
        current = addCurrentNext(current, point);
     }
@@ -844,10 +849,10 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
     double number;
     double* firstPoint = NULL;
     char c;
-    int d=0;
+    int d=0, i;
     double* point;
     Node* points, *current;
-    int numPoints=0;
+    int numPoints = 0;
     
     myfile = fopen(fileName, "r");
 
@@ -885,7 +890,7 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
        point = (double*)calloc(d,sizeof(double));
        assert(point);
        point[0] = number;
-       for(int i = 1; i < d; i++)
+       for(i = 1; i < d; i++)
        {
            fscanf(myfile, "%lf%c", &number, &c); 
            point[i]=number;
@@ -894,6 +899,8 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
        current = addNext(current, point);
        numPoints++;
     }
+
+    fclose(myfile);
 
     *numOfPoints = numPoints;
     *finald = d;
@@ -1177,6 +1184,7 @@ void freePointsList(Node * points, int numOfpoints)
         iter = prevNode->next;
         free(prevNode);
     }
+    free(iter);
 }
 
 #pragma endregion Free_Memory
@@ -1213,9 +1221,12 @@ void printEigenfromMat(matrix* m)
 
 void printMatOutput(matrix *m) //TODO check if it's according to rules and replace with printMatrix
 {
-    for (int i=0 ; i<m->rows ; i++){
-        for (int j=0 ; j< m->columns ;j++ ){
-            printf("%.4f,",m->data[i][j]);
+    int i, j;
+    for (i = 0; i < m->rows; i++)
+    {
+        for (j = 0; j < m->columns; j++ )
+        {
+            printf("%.4f,", m->data[i][j]);
         }
         printf("\n");
     }
@@ -1258,7 +1269,7 @@ void printLst(Node* lst, int d)
 
     while (curr->data != NULL)
     {
-        for(int j = 0 ; j < d ; j++)
+        for(j = 0; j < d; j++)
         {
             if(j != d - 1)
             {
