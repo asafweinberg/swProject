@@ -75,14 +75,11 @@ matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T 
 
 void runJacobi(Node* points, int numOfPoints, int d, int k)
 {
-//    double** TDoubleArr;
     matrix * eigenValues, *eigenVectors, *vectorsToPrint;
-    // cluster* clusters;
-    matrix * lNorm;
+    matrix * mat;
 
-    // lNorm = runLnorm(points, numOfPoints, d, false); // TODO: check which matrix to send
-    lNorm = pointsToMat(points, numOfPoints, d);
-    jacobiAlg(lNorm, &eigenValues, &eigenVectors); //lNorm is free here
+    mat = pointsToMat(points, numOfPoints, d);
+    jacobiAlg(mat, &eigenValues, &eigenVectors); //mat is free here
 
     printEigenfromMat(eigenValues);
     vectorsToPrint = transposeMatrix(eigenVectors, true);
@@ -590,8 +587,6 @@ matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) /
     int rows, columns, i, j, sign;
     matrix* sumMat;
 
-    assert((mat1->rows == mat2->rows) && (mat1->columns == mat2->columns));
-
     rows = mat1->rows;
     columns = mat1->columns;
     sumMat = newMatrix(rows,columns);
@@ -669,16 +664,19 @@ matrix* newMatrix(int rows, int columns)
     int i, j;
 
     m = calloc(1, sizeof(matrix));
-    assert(m);
+    assertFunc(m);
+    // assert(m);
     m->rows = rows;
     m->columns = columns;
     m->data = calloc(rows,sizeof(double*));
-    assert(m->data);
+    assertFunc(m->data);
+    // assert(m->data);
 
     for(i = 0; i < rows; i++)
     {
         (m->data)[i] = calloc(columns,sizeof(double));
-        assert((m->data)[i]);
+        assertFunc((m->data)[i]);
+        // assert((m->data)[i]);
     }
     return m;
 }
@@ -743,13 +741,15 @@ Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
    
 
     points = (Node*)malloc(sizeof(Node));
-    assert(points);
+    assertFunc(points);
+    // assert(points);
     current = points;
 
     for (i=0 ; i<numOfpoints ; i++)
     {
        point = (double*)calloc(d,sizeof(double));
-       assert(point);
+        assertFunc(point);
+    //    assert(point);
 
        for(j = 0; j < d; j++)
        { 
@@ -766,23 +766,26 @@ Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
 cluster * getClustersFromT(double ** TDoubleArr, int finalK)
 {
     cluster* clusters;
-    int i,j,d;
+    int i, j, d;
     d = finalK;
-    clusters=(cluster *)calloc(finalK, sizeof(cluster));
-    assert(clusters);
+    clusters = (cluster *)calloc(finalK, sizeof(cluster));
+    assertFunc(clusters);
+    // assert(clusters);
 
-    for(i=0; i<finalK; i++)
+    for(i = 0; i < finalK; i++)
     {
         clusters[i].mean = (double*)calloc(d, sizeof(double));
-        assert(clusters[i].mean);
-        clusters[i].prevMean = (double*)calloc(d,sizeof(double));
-        assert(clusters[i].prevMean);
+        assertFunc(clusters[i].mean);
+        // assert(clusters[i].mean);
+        clusters[i].prevMean = (double*)calloc(d, sizeof(double));
+        assertFunc(clusters[i].prevMean);
+        // assert(clusters[i].prevMean);
         
-        for(j=0; j<d; j++)
+        for(j = 0; j < d; j++)
         {   
             clusters[i].prevMean[j] = TDoubleArr[i][j];
         }
-        clusters[i].size=0;
+        clusters[i].size = 0;
     }
     // printf("--------------------------\n");
     // printClusters(clusters, finalK, finalK);
@@ -818,11 +821,13 @@ double ** matToArr(matrix * m, int free1)
     int i,j;
 
     arr = calloc(m->rows, sizeof(double*));
-    assert(arr);
+    assertFunc(arr);
+    // assert(arr);
     for(i = 0; i < m->rows; i++)
     {
         arr[i] = calloc(m->columns, sizeof(double));
-        assert(arr[i]);
+        assertFunc(arr[i]);
+        // assert(arr[i]);
         for(j = 0; j < m->columns; j++)
         {
             arr[i][j] = m->data[i][j];
@@ -861,7 +866,8 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
     //first number in first point
     fscanf(myfile, "%lf%c", &number, &c);
     firstPoint = (double*)malloc(sizeof(double));
-    assert(firstPoint);
+    assertFunc(firstPoint);
+    // assert(firstPoint);
     firstPoint[0] = number;
     d++;
     if (c!='\n')
@@ -880,15 +886,17 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
     }
 
     points = (Node*)malloc(sizeof(Node));
-    assert(points);
+    assertFunc(points);
+    // assert(points);
     points->next = NULL;
     points->data = firstPoint;
     numPoints++;
-    current=points;
+    current = points;
     while (fscanf(myfile, "%lf%c", &number, &c) == 2)
     {
        point = (double*)calloc(d,sizeof(double));
-       assert(point);
+       assertFunc(point);
+    //    assert(point);
        point[0] = number;
        for(i = 1; i < d; i++)
        {
@@ -921,11 +929,13 @@ double ** kmeansFunc(int k, int maxIter, int numOfPoints, int d, Node* pointsMat
     doKmeans(clusters,points,d,k,numOfPoints, maxIter);
 
     clusterArr = (double**)calloc(k,sizeof(double*));
-    assert(clusterArr);
-    for (i=0; i<k; i++){
+    assertFunc(clusterArr);
+    // assert(clusterArr);
+    for (i = 0; i < k; i++){
         clus = (double*)calloc(d,sizeof(double));
-        assert(clus);
-        for (j=0 ; j<d ; j++)
+        assertFunc(clus);
+        // assert(clus);
+        for (j = 0; j < d; j++)
         {
             clus[j] = clusters[i].prevMean[j];
         }
@@ -1096,8 +1106,9 @@ void iterateClusters(cluster* clusters, int length, int d)
 Node* addNext(Node* node, double* point) 
 {
     Node* new;
-    new = (Node*)calloc(1,sizeof(Node));
-    assert(new);
+    new = (Node*)calloc(1, sizeof(Node));
+    assertFunc(new);
+    // assert(new);
 
 
     new->next = NULL;
@@ -1111,7 +1122,8 @@ Node* addCurrentNext(Node* node, double* point)
 {
     Node* new;
     new = (Node*)calloc(1,sizeof(Node));
-    assert(new);
+    assertFunc(new);
+    // assert(new);
 
 
     new->next = NULL;
@@ -1196,14 +1208,17 @@ void freePointsList(Node * points, int numOfpoints)
 void printMatrix(matrix* A)
 {
     int i, j;
-    // printf("===================\n");
     for (i = 0; i < A->rows; i++)
     {
-        for (j = 0; j < A->columns-1; j++) //TODO change
+        for (j = 0; j < A->columns; j++) //TODO change
         {
-            printf("%.4f,", A->data[i][j]);
+            if (j != A->columns-1)
+                printf("%.4f,", A->data[i][j]);
+            else
+                printf("%.4f", A->data[i][j]);
         }
-        printf("%.4f\n", A->data[i][j]);
+        if (i != A->rows-1) 
+            printf("\n");
     }
 }
 
@@ -1290,24 +1305,33 @@ void printLst(Node* lst, int d)
 void printClusters(cluster* clusters, int k, int d)
 {
     int i, j;
-    for(i=0 ; i<k ; i++)
+    for (i = 0; i < k; i++)
     {
         // printf("  %d   ",clusters[i].size);
-        for(j=0 ; j<d ; j++)
+        for (j = 0; j < d; j++)
         {
-            if(j!=d-1)
+            if (j != d-1)
             {
                 printf("%.4f,",clusters[i].prevMean[j]);
             }
             else
             {
-              printf("%.4f\n",clusters[i].prevMean[j]);  
+              printf("%.4f",clusters[i].prevMean[j]);  
             }
         }
-        
+        if (i != k-1) 
+            printf("\n");
     }
 }
 
+void assertFunc(void* x)
+{
+    if (!x)
+    {
+        printf("An Error Has Occured");
+        exit(true);
+    }
+}
 
 
 #pragma endregion Print_Functions

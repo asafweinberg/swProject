@@ -131,3 +131,5 @@ void printEigenArr(eigenVal * arr, int length);
 void printNodesList(Node * points, int d);
 void printLst(Node* lst, int d); // TODO: duplicate method?
 void printClusters(cluster* clusters, int k, int d);
+void assertFunc(void* x);
+
