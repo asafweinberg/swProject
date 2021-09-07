@@ -30,7 +30,6 @@ typedef struct{
     int column;
 } eigenVal;
 
-//enum goal{spk,wam,ddg,lnorm,jacobi};
 
 #define true 1
 #define false 0
@@ -45,9 +44,9 @@ typedef struct{
 void runWam(Node* points, int numOfPoints, int d);
 void runDdG(Node* points, int numOfPoints, int d);
 matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat0);
-matrix * runSpk(int k, Node* points, int numOfPoints, int d); //returns matrix T nxk
-void runJacobi(Node* points, int numOfPoints, int d, int k);
-double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* numOfPoints); //return T or NULL
+matrix * runSpk(int k, Node* points, int numOfPoints, int d); /*returns matrix T nxk*/
+void runJacobi(Node* points, int numOfPoints, int d);
+double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* numOfPoints); /*return T or NULL*/
 
 
 /* -------------------------------------------- goals Functions -------------------------------------------- */
@@ -118,7 +117,7 @@ Node* addCurrentNext(Node* node, double* point);
 
 /* -------------------------------------------- Free Memory Functions ------------------------------------------- */
 void freeMatrix(matrix * m);
-void free2DArray(double ** TDoubleArr, int d, int numOfpoints);
+void free2DArray(double ** TDoubleArr, int numOfpoints);
 void freeKmeansMemory(cluster* clusters, Node* points, int k, int numOfpoints);
 void freePointsList(Node * points, int numOfpoints);
 
@@ -126,10 +125,7 @@ void freePointsList(Node * points, int numOfpoints);
 /* -------------------------------------------- Print Functions ------------------------------------------- */
 void printMatrix(matrix* A);
 void printEigenfromMat(matrix* m);
-void printMatOutput(matrix *m); //TODO check if it's according to rules and replace with printMatrix
 void printEigenArr(eigenVal * arr, int length);
-void printNodesList(Node * points, int d);
-void printLst(Node* lst, int d); // TODO: duplicate method?
 void printClusters(cluster* clusters, int k, int d);
 void assertFunc(void* x);
 
