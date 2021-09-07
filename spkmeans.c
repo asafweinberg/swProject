@@ -6,9 +6,6 @@
 /*-----------------------------------------------------------------------------*/
 
 /* -------------------------------------------- Run Flow Functions -------------------------------------------- */
-#pragma region Run_Flow
-
-
 void runWam(Node* points, int numOfPoints, int d)
 {
     matrix * m = formMatW(points,numOfPoints,d);
@@ -48,41 +45,34 @@ matrix * runLnorm(Node* points, int numOfPoints, int d, int printMat0)
 }
 
 
-matrix * runSpk(int k, Node* points, int numOfPoints, int d) //returns matrix T nxk
+matrix * runSpk(int k, Node* points, int numOfPoints, int d)
 {   
     matrix * eigenValues, *eigenVectors;
     matrix * lNorm, * matT, *matU;
 
     if (numOfPoints <= k && k != 0)
     {
-        printf("ERROR K>=N");  //TODO check if need to free here
+        printf("ERROR K>=N");
         assert(0);
     }
 
     lNorm = runLnorm(points, numOfPoints, d, false);
-    jacobiAlg(lNorm, &eigenValues, &eigenVectors); //lNorm is free here
+    jacobiAlg(lNorm, &eigenValues, &eigenVectors);
     matU = calcInitialVectorsFromJacobi(eigenValues, eigenVectors, k); 
     matT = formMatT(matU, true);
-    // freeMatrix(eigenValues);
-    // freeMatrix(eigenVectors);
     freePointsList(points,numOfPoints);
-    // printMatrix(matT);
-    // printf("---------------------------------------------------------------------");
     return matT; 
     
 }
 
 
-void runJacobi(Node* points, int numOfPoints, int d, int k)
+void runJacobi(Node* points, int numOfPoints, int d)
 {
-//    double** TDoubleArr;
     matrix * eigenValues, *eigenVectors, *vectorsToPrint;
-    // cluster* clusters;
-    matrix * lNorm;
+    matrix * mat;
 
-    // lNorm = runLnorm(points, numOfPoints, d, false); // TODO: check which matrix to send
-    lNorm = pointsToMat(points, numOfPoints, d);
-    jacobiAlg(lNorm, &eigenValues, &eigenVectors); //lNorm is free here
+    mat = pointsToMat(points, numOfPoints, d);
+    jacobiAlg(mat, &eigenValues, &eigenVectors);
 
     printEigenfromMat(eigenValues);
     vectorsToPrint = transposeMatrix(eigenVectors, true);
@@ -94,21 +84,21 @@ void runJacobi(Node* points, int numOfPoints, int d, int k)
 }
 
 
-double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* numOfPoints) //return T or NULL
+double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* numOfPoints)
 {
     int d;
     Node* points;
     matrix* T;
     double** TDoubleArr;
 
-    points = getPoints(fileName, numOfPoints, &d); //numOfpoints updated
+    points = getPoints(fileName, numOfPoints, &d);
 
-    if(!strcmp(myGoal, "spk")) //returns T
+    if(!strcmp(myGoal, "spk"))
     {
-        T = runSpk(k, points, *numOfPoints, d); //returns matrix *
+        T = runSpk(k, points, *numOfPoints, d);
         *finalK = T->columns;
         *numOfPoints = T->rows;
-        TDoubleArr = matToArr(T, true); // TODO change T is free here
+        TDoubleArr = matToArr(T, true);
         return TDoubleArr;
     }
 
@@ -132,26 +122,21 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
 
     if(!strcmp(myGoal, "jacobi"))
     {
-        runJacobi(points, *numOfPoints, d, k);
+        runJacobi(points, *numOfPoints, d);
         return NULL;
     }
+
+    return NULL;
 }
 
-
-#pragma endregion Run_Flow
-
-
 /* -------------------------------------------- goals Functions -------------------------------------------- */
-#pragma region goals
 
 matrix* formMatW(Node* points, int numOfPoints, int d)
 {
     matrix *Wmat, *pointsMat;
     int i, j;
-    Node* current;
     double dis;
 
-    current = points;
     Wmat = newMatrix(numOfPoints, numOfPoints);
     pointsMat = pointsToMat(points, numOfPoints, d);
 
@@ -187,13 +172,13 @@ matrix* formMatT(matrix * matU, int free1)
 
         for (j = 0; j < T->columns; j++)
         {
-            if (matU->data[i][j] == 0.0) //TODO check about 0
+            if (matU->data[i][j] == 0.0)
             {
                 T->data[i][j] = 0.0;
             }
             else
             {
-                T->data[i][j] = (matU->data[i][j])/sumSquare;
+                T->data[i][j] = (matU->data[i][j]) / sumSquare;
             }
         }
     }
@@ -248,13 +233,11 @@ matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW)
     matrix *lnormMat, *IMat, *rootD;
 
     IMat = formMatI(matD->rows);
-    rootD = minusRootMat(matD, false); //matD will be free later if needed
+    rootD = minusRootMat(matD, false);
 
-//    lnormMat = rootD;
-    lnormMat = mulMatrices(rootD, matW, false, false); //matW will be free later if needed
-    lnormMat = mulMatrices(lnormMat, rootD, true, true); //rootD is free here
-    lnormMat = addMatrices(IMat, lnormMat ,true, true, true); //IMat is free here
-
+    lnormMat = mulMatrices(rootD, matW, false, false);
+    lnormMat = mulMatrices(lnormMat, rootD, true, true);
+    lnormMat = addMatrices(IMat, lnormMat ,true, true, true);
 
     if(freeD)
     {
@@ -269,11 +252,7 @@ matrix* formMatLnorm(matrix* matD , matrix* matW , int freeD, int freeW)
     return lnormMat;
 }
 
-#pragma endregion goals
-
-
 /* -------------------------------------------- jacobi Functions ------------------------------------------- */
-#pragma region jacobi
 
 void jacobiAlg(matrix* lNorm, matrix** eigenValues, matrix** eigenVectors)
 {
@@ -282,13 +261,12 @@ void jacobiAlg(matrix* lNorm, matrix** eigenValues, matrix** eigenVectors)
     matrix *matA, *matB, *pivot, *tempVectors;
 
     matA = lNorm;
-    // matB = newMatrix(matA -> rows, matA -> columns);
     tempVectors = formMatI(matA -> rows);
 
     while (!isDiagonal(matA) && ++iterations <= MaxJacobiIter && !convergence) 
     {
         pivot = getRotationMatrixValues(matA, &c, &s, &rowPivot, &colPivot);
-        matB = calcNextJacobiMatrix(matA, c, s, rowPivot, colPivot); //TODO, make sure that matB changes
+        matB = calcNextJacobiMatrix(matA, c, s, rowPivot, colPivot);
 
         tempVectors = mulMatrices(tempVectors, pivot, true, true);
 
@@ -304,17 +282,13 @@ void jacobiAlg(matrix* lNorm, matrix** eigenValues, matrix** eigenVectors)
 
 matrix* getRotationMatrixValues(matrix* mat, double *c, double *s, int *rowPivot, int *colPivot)
 {
-    matrix *p;
     int signTheta;
     double **m, theta, t;
 
     m = mat -> data;
 
-    p = newMatrix(mat -> rows, mat -> columns);
     findLargestCell(mat, rowPivot, colPivot);
     
-    //TODO: Handle zeros of theta or cell and others
-
     theta = (m[*colPivot][*colPivot] - m[*rowPivot][*rowPivot]) / (2 * m[*rowPivot][*colPivot]);
     signTheta = theta < 0? -1 : 1;
     t = signTheta / (fabs(theta) + pow((theta * theta + 1), 0.5));
@@ -397,19 +371,15 @@ matrix* calcNextJacobiMatrix(matrix* matA, double c, double s, int i, int j)
 
 int hasJacobiConvergence(matrix* matA, matrix* matB)
 {
-    double d1,d2;
-    d1=calcOff(matA);
-    d2=calcOff(matB);
     return fabs(calcOff(matA) - calcOff(matB)) <= epsilon;
 }
 
 
 double calcOff(matrix* m)
 {
-    // improving running time possibility by multipling the sum of half by 2 because of simetry
     int i, j;
-    double off = 0;
-    for ( i = 0; i < m ->rows; i++)
+    double off = 0.0;
+    for (i = 0; i < m ->rows; i++)
     {
         for (j = 0; j < m->columns; j++)
         {
@@ -433,7 +403,6 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, 
 
     vectorsIndices = eigenGapHeuristic(eigenValues, &k);
     finalVectors = newMatrix(eigenVectors->rows, k);
-    // *finalK=k;
 
     for (j = 0; j < k; j++)
     {
@@ -451,7 +420,6 @@ matrix* calcInitialVectorsFromJacobi(matrix* eigenValues, matrix* eigenVectors, 
 }
 
 
-// returns an array of the final starting vectors
 int* eigenGapHeuristic(matrix* matA, int* k)
 {
     eigenVal* values;
@@ -459,7 +427,7 @@ int* eigenGapHeuristic(matrix* matA, int* k)
 
     length = matA->columns;
     values = (eigenVal*)calloc(length, sizeof(eigenVal));
-    assert(values);
+    assertFunc(values);
 
     for (i = 0; i < length; i++)
     {
@@ -467,16 +435,15 @@ int* eigenGapHeuristic(matrix* matA, int* k)
         values[i].value = matA->data[i][i];
     }
 
-    // printEigenArr(values,length);
-    
     qsort(values, length, sizeof(eigenVal), compareEigenVal);
 
-    // printEigenArr(values,length);
     if (*k == 0)
     {
         *k = findMaxGap(values, length);
     }
+
     vectorsIndices = (int*)calloc(*k, sizeof(int));
+    assertFunc(vectorsIndices);
     for (i = 0; i < *k; i++)
     {
         vectorsIndices[i] = values[i].column;
@@ -490,11 +457,12 @@ int* eigenGapHeuristic(matrix* matA, int* k)
 
 int findMaxGap(eigenVal* values, int length)
 {
-    double currDiff = 0, maxDiff = -1.0;
+    double currDiff = 0.0, maxDiff = -1.0;
     int i, k = 0;
-    for (i = 0; i < (length-1) / 2; i++)
+
+    for (i = 0; i < floor(length / 2); i++)
     {
-        currDiff = fabs(values[i].value - values[i + 1].value); //TODO: check the indices
+        currDiff = fabs(values[i].value - values[i + 1].value);
         if(currDiff > maxDiff)
         {
             maxDiff = currDiff;
@@ -519,17 +487,11 @@ int compareEigenVal(const void * a, const void * b)
     return aPtr -> value < bPtr ->value ? -1 : 1 ;
 }
 
-
-#pragma endregion jacobi
-
-
 /* -------------------------------------------- matrices Functions ------------------------------------------- */
-#pragma region matrices
 
-//only for diagonal matrix
 matrix* minusRootMat(matrix* mat, int free1)
 {
-    int i,j;
+    int i;
     matrix* newMat;
 
     newMat = newMatrix(mat->rows, mat->columns);
@@ -585,12 +547,10 @@ matrix* mulMatrices(matrix* mat1, matrix* mat2, int free1, int free2)
 }
 
 
-matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2) // dec=1 -> dec 
+matrix* addMatrices(matrix* mat1, matrix* mat2, int dec, int free1, int free2)
 {
     int rows, columns, i, j, sign;
     matrix* sumMat;
-
-    assert((mat1->rows == mat2->rows) && (mat1->columns == mat2->columns));
 
     rows = mat1->rows;
     columns = mat1->columns;
@@ -626,9 +586,9 @@ matrix* formMatI(int dimention)
 
     matI = newMatrix(dimention, dimention);
 
-    for(i = 0 ; i < dimention ; i++)
+    for (i = 0 ; i < dimention ; i++)
     {   
-        for(j = 0 ; j< dimention ; j++)
+        for (j = 0 ; j< dimention ; j++)
         {
             if (i == j)
             {
@@ -666,25 +626,25 @@ int isDiagonal(matrix* m)
 matrix* newMatrix(int rows, int columns)
 {
     matrix * m;
-    int i, j;
+    int i;
 
     m = calloc(1, sizeof(matrix));
-    assert(m);
+    assertFunc(m);
     m->rows = rows;
     m->columns = columns;
     m->data = calloc(rows,sizeof(double*));
-    assert(m->data);
+    assertFunc(m->data);
 
     for(i = 0; i < rows; i++)
     {
         (m->data)[i] = calloc(columns,sizeof(double));
-        assert((m->data)[i]);
+        assertFunc((m->data)[i]);
     }
     return m;
 }
 
 
-matrix* copyMatrix(matrix* m) // TODO: check if need to free
+matrix* copyMatrix(matrix* m)
 {
     matrix* newMat;
     int i,j;
@@ -724,32 +684,27 @@ matrix* transposeMatrix(matrix* m, int free)
     return newMat;
 }
 
-#pragma endregion matrices
-
-
 /*---------------------------------------------------------------------------------------------------*/
 /* ******************************************** KMeans Functions ******************************************** */
 /*---------------------------------------------------------------------------------------------------*/
 
 /* -------------------------------------------- Data Convertions Functions ------------------------------------------- */
-#pragma region Data_Convertions
 
 Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
 {
     int i,j;
-    // double number;
     double* point;
     Node* points, *current;
    
 
     points = (Node*)malloc(sizeof(Node));
-    assert(points);
+    assertFunc(points);
     current = points;
 
     for (i=0 ; i<numOfpoints ; i++)
     {
        point = (double*)calloc(d,sizeof(double));
-       assert(point);
+        assertFunc(point);
 
        for(j = 0; j < d; j++)
        { 
@@ -757,8 +712,7 @@ Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
        }
        current = addCurrentNext(current, point);
     }
-    free2DArray(TDoubleArr, numOfpoints, d);
-    // printNodesList(points,d);
+    free2DArray(TDoubleArr, numOfpoints);
     return points;
 }
 
@@ -766,27 +720,24 @@ Node* getPointsFromT(double ** TDoubleArr, int d, int numOfpoints)
 cluster * getClustersFromT(double ** TDoubleArr, int finalK)
 {
     cluster* clusters;
-    int i,j,d;
+    int i, j, d;
     d = finalK;
-    clusters=(cluster *)calloc(finalK, sizeof(cluster));
-    assert(clusters);
+    clusters = (cluster *)calloc(finalK, sizeof(cluster));
+    assertFunc(clusters);
 
-    for(i=0; i<finalK; i++)
+    for(i = 0; i < finalK; i++)
     {
         clusters[i].mean = (double*)calloc(d, sizeof(double));
-        assert(clusters[i].mean);
-        clusters[i].prevMean = (double*)calloc(d,sizeof(double));
-        assert(clusters[i].prevMean);
+        assertFunc(clusters[i].mean);
+        clusters[i].prevMean = (double*)calloc(d, sizeof(double));
+        assertFunc(clusters[i].prevMean);
         
-        for(j=0; j<d; j++)
+        for(j = 0; j < d; j++)
         {   
             clusters[i].prevMean[j] = TDoubleArr[i][j];
         }
-        clusters[i].size=0;
+        clusters[i].size = 0;
     }
-    // printf("--------------------------\n");
-    // printClusters(clusters, finalK, finalK);
-    // printf("--------------------------\n");
     return clusters;
 }
 
@@ -818,11 +769,11 @@ double ** matToArr(matrix * m, int free1)
     int i,j;
 
     arr = calloc(m->rows, sizeof(double*));
-    assert(arr);
+    assertFunc(arr);
     for(i = 0; i < m->rows; i++)
     {
         arr[i] = calloc(m->columns, sizeof(double));
-        assert(arr[i]);
+        assertFunc(arr[i]);
         for(j = 0; j < m->columns; j++)
         {
             arr[i][j] = m->data[i][j];
@@ -835,13 +786,7 @@ double ** matToArr(matrix * m, int free1)
     return arr;
 }
 
-
-#pragma endregion Data_Convertions
-
-
 /* -------------------------------------------- Kmeans Algorithm Functions ------------------------------------------- */
-#pragma region Algorithm
-
 
 Node* getPoints(char* fileName, int* numOfPoints, int* finald) 
 {
@@ -856,12 +801,10 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
     
     myfile = fopen(fileName, "r");
 
-    // fscanf(myfile, "%lf%c", &number, &c);
 
-    //first number in first point
     fscanf(myfile, "%lf%c", &number, &c);
     firstPoint = (double*)malloc(sizeof(double));
-    assert(firstPoint);
+    assertFunc(firstPoint);
     firstPoint[0] = number;
     d++;
     if (c!='\n')
@@ -870,7 +813,7 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
         {
             d++;
             firstPoint = (double*)realloc(firstPoint, d*sizeof(double));
-            assert(firstPoint);
+            assertFunc(firstPoint);
             firstPoint[d-1] = number;
             if(c == '\n' || c == EOF)
             {
@@ -880,15 +823,15 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
     }
 
     points = (Node*)malloc(sizeof(Node));
-    assert(points);
+    assertFunc(points);
     points->next = NULL;
     points->data = firstPoint;
     numPoints++;
-    current=points;
+    current = points;
     while (fscanf(myfile, "%lf%c", &number, &c) == 2)
     {
        point = (double*)calloc(d,sizeof(double));
-       assert(point);
+       assertFunc(point);
        point[0] = number;
        for(i = 1; i < d; i++)
        {
@@ -921,11 +864,11 @@ double ** kmeansFunc(int k, int maxIter, int numOfPoints, int d, Node* pointsMat
     doKmeans(clusters,points,d,k,numOfPoints, maxIter);
 
     clusterArr = (double**)calloc(k,sizeof(double*));
-    assert(clusterArr);
-    for (i=0; i<k; i++){
+    assertFunc(clusterArr);
+    for (i = 0; i < k; i++){
         clus = (double*)calloc(d,sizeof(double));
-        assert(clus);
-        for (j=0 ; j<d ; j++)
+        assertFunc(clus);
+        for (j = 0; j < d; j++)
         {
             clus[j] = clusters[i].prevMean[j];
         }
@@ -959,12 +902,7 @@ void doKmeans(cluster* clusters, Node* points, int d, int k, int numOfPoints, in
     }
 }
 
-
-#pragma endregion Algorithm
-
-
 /* -------------------------------------------- Kmeans Helpers Functions ------------------------------------------- */
-#pragma region Helpers
 
 int getMinCluster(double* point, cluster* clusters, int K, int d)
 {
@@ -1020,7 +958,6 @@ int checkKmeansConvergence(cluster* clusters, int k, int d)
     int i, j;
     for(i = 0; i < k; i++)
     {
-        // fix for garibi's way
         if (clusters[i].size == 0)
             continue;
         for(j = 0; j < d; j++)
@@ -1047,8 +984,6 @@ void iterateClusters(cluster* clusters, int length, int d)
     double* prev;
     int i;
 
-
-    //fix to garibi's way ********************
     for (i = 0; i < length; i++)
     {
        if (clusters[i].size != 0) 
@@ -1059,49 +994,28 @@ void iterateClusters(cluster* clusters, int length, int d)
        }
        clusters[i].size = 0;
     }
-    for (i=0; i< length; i++)
+    for (i = 0; i < length; i++)
     {
         clusters[i].mean = (double*)calloc(d, sizeof(double));
-        // TODO: assert calloc
+        assertFunc(clusters[i].mean);
     }
-
-    //our old way *******************
-
-    // for (i = 0; i < length; i++)
-    // {
-    //    prev = clusters[i].prevMean;
-    //    clusters[i].prevMean = clusters[i].mean;
-    //    clusters[i].size = 0;
-    //    free(prev);
-    // }
-    // for (i=0; i< length; i++)
-    // {
-    //     clusters[i].mean = (double*)calloc(d, sizeof(double));
-    //     // TODO: assert calloc
-    // }
 }
-
-
-#pragma endregion Helpers
-
-
 
 /*---------------------------------------------------------------------------------------------------*/
 /* ******************************************** General Functions ******************************************** */
 /*---------------------------------------------------------------------------------------------------*/
 
 /* -------------------------------------------- List Functions ------------------------------------------- */
-#pragma region List_Functions
 
 Node* addNext(Node* node, double* point) 
 {
     Node* new;
-    new = (Node*)calloc(1,sizeof(Node));
-    assert(new);
+    new = (Node*)calloc(1, sizeof(Node));
+    assertFunc(new);
 
 
     new->next = NULL;
-    new->data = point; //TODO check that doesnt harm anything else
+    new->data = point;
 
     node->next = new;
     return new;
@@ -1111,7 +1025,7 @@ Node* addCurrentNext(Node* node, double* point)
 {
     Node* new;
     new = (Node*)calloc(1,sizeof(Node));
-    assert(new);
+    assertFunc(new);
 
 
     new->next = NULL;
@@ -1121,11 +1035,7 @@ Node* addCurrentNext(Node* node, double* point)
     return new;
 }
 
-#pragma endregion List_Functions
-
-
 /* -------------------------------------------- Free Memory Functions ------------------------------------------- */
-#pragma region Free_Memory
 
 void freeMatrix(matrix * m)
 {
@@ -1139,7 +1049,7 @@ void freeMatrix(matrix * m)
 }
 
 
-void free2DArray(double ** TDoubleArr, int d, int numOfpoints)
+void free2DArray(double ** TDoubleArr, int numOfpoints)
 {
     int i;
     for (i = 0; i < numOfpoints; i++)
@@ -1152,11 +1062,7 @@ void free2DArray(double ** TDoubleArr, int d, int numOfpoints)
 
 void freeKmeansMemory(cluster* clusters, Node* points, int k, int numOfpoints)
 {
-    Node* iter,*prevNode;
     int i;
-
-    iter = points;
-    prevNode = NULL;
 
     for(i = 0 ; i < k ; i++)
     {
@@ -1187,23 +1093,22 @@ void freePointsList(Node * points, int numOfpoints)
     free(iter);
 }
 
-#pragma endregion Free_Memory
-
-
 /* -------------------------------------------- Print Functions ------------------------------------------- */
-#pragma region Print_Functions
 
 void printMatrix(matrix* A)
 {
     int i, j;
-    // printf("===================\n");
     for (i = 0; i < A->rows; i++)
     {
-        for (j = 0; j < A->columns-1; j++) //TODO change
+        for (j = 0; j < A->columns; j++)
         {
-            printf("%.4f,", A->data[i][j]);
+            if (j != A->columns-1)
+                printf("%.4f,", A->data[i][j]);
+            else
+                printf("%.4f", A->data[i][j]);
         }
-        printf("%.4f\n", A->data[i][j]);
+        if (i != A->rows-1) 
+            printf("\n");
     }
 }
 
@@ -1219,21 +1124,6 @@ void printEigenfromMat(matrix* m)
 }
 
 
-void printMatOutput(matrix *m) //TODO check if it's according to rules and replace with printMatrix
-{
-    int i, j;
-    for (i = 0; i < m->rows; i++)
-    {
-        for (j = 0; j < m->columns; j++ )
-        {
-            printf("%.4f,", m->data[i][j]);
-        }
-        printf("\n");
-    }
-    
-}
-
-
 void printEigenArr(eigenVal * arr, int length)
 {
     int u;
@@ -1245,87 +1135,49 @@ void printEigenArr(eigenVal * arr, int length)
 }
 
 
-void printNodesList(Node * points, int d)
-{
-    Node *iter=points;
-    int i;
-    printf("==============================\n");
-    while(iter->data!= NULL)
-    {
-        for (i=0 ; i< d-1 ;i++){
-            printf("%.4f,",iter->data[i]);
-        }
-        printf("%.4f\n",iter->data[i]);
-        iter=iter->next;
-    }
-    printf("==============================\n");
-}
-
-// TODO: duplicate method?
-void printLst(Node* lst, int d)
-{
-    int j;
-    Node* curr = lst;
-
-    while (curr->data != NULL)
-    {
-        for(j = 0; j < d; j++)
-        {
-            if(j != d - 1)
-            {
-                printf("%.4f,", curr->data[j]);
-            }
-            else
-            {
-              printf("%.4f\n", curr->data[j]);  
-            }
-        }
-        curr = curr->next;
-    }
-    
-    
-}
-
-
 void printClusters(cluster* clusters, int k, int d)
 {
     int i, j;
-    for(i=0 ; i<k ; i++)
+    for (i = 0; i < k; i++)
     {
-        // printf("  %d   ",clusters[i].size);
-        for(j=0 ; j<d ; j++)
+        for (j = 0; j < d; j++)
         {
-            if(j!=d-1)
+            if (j != d-1)
             {
                 printf("%.4f,",clusters[i].prevMean[j]);
             }
             else
             {
-              printf("%.4f\n",clusters[i].prevMean[j]);  
+              printf("%.4f",clusters[i].prevMean[j]);  
             }
         }
-        
+        if (i != k-1) 
+            printf("\n");
+    }
+}
+
+void assertFunc(void* x)
+{
+    if (!x)
+    {
+        printf("An Error Has Occured");
+        exit(true);
     }
 }
 
 
-
-#pragma endregion Print_Functions
-
-
-
 int main(int argc, char *argv[])
-{
-    
-    int k, d, numOfPoints;
-    char* myGoal;
-    char* fileName;
+{   
+    int k, d, numOfPoints, maxIter = 300, finalK;
+    char *myGoal, *fileName;
     double ** TDoubleArr;
-    int maxIter = 300;
-    int finalK;
     Node* points;
     cluster* clusters;
-    int i,j;    
+
+    if (argc != 4)
+    {
+        assertFunc(NULL);
+    }
 
     k = atoi(argv[1]);
     myGoal = argv[2];
