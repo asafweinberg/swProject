@@ -92,7 +92,7 @@ double ** runMainFlow(int k, char* myGoal, char* fileName, int* finalK, int* num
     double** TDoubleArr;
 
     points = getPoints(fileName, numOfPoints, &d);
-
+  
     if(!strcmp(myGoal, "spk"))
     {
         T = runSpk(k, points, *numOfPoints, d);
@@ -807,7 +807,7 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
     assertFunc(firstPoint);
     firstPoint[0] = number;
     d++;
-    if (c!='\n')
+    if (c!='\n' && c!='\r')
     {
         while (fscanf(myfile,"%lf%c", &number, &c) == 2)
         {
@@ -815,7 +815,7 @@ Node* getPoints(char* fileName, int* numOfPoints, int* finald)
             firstPoint = (double*)realloc(firstPoint, d*sizeof(double));
             assertFunc(firstPoint);
             firstPoint[d-1] = number;
-            if(c == '\n' || c == EOF)
+            if(c == '\n' || c == EOF || c == '\r')
             {
                 break;
             }
@@ -1195,8 +1195,11 @@ int main(int argc, char *argv[])
     points = getPointsFromT(TDoubleArr, d, numOfPoints);
 
     doKmeans(clusters, points, d, finalK, numOfPoints, maxIter);
+
     printClusters(clusters, finalK, d);
+
     freeKmeansMemory(clusters, points, finalK, numOfPoints);
+
     return 0;
 }
 
