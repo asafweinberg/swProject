@@ -64,13 +64,15 @@ def main(args):
 
     for fm in finalMeans[:-1]:
         for num in fm[:-1]:
-            print(str(round(num, 4)) + ',', end="")
-        print(str(round(fm[-1], 4)))
+            print('{:.4f}'.format(num) + ',', end="")
+        print('{:.4f}'.format(fm[-1]))
     
     fm=finalMeans[-1]
+
     for num in fm[:-1]:
-        print(str(round(num, 4)) + ',', end="")
-    print(str(round(fm[-1], 4)), end="")
+        print('{:.4f}'.format(num) + ',', end="")
+    print('{:.4f}'.format(fm[-1]), end="")
+
 
 
 # def readData(fileName1, fileName2):
