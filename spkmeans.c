@@ -71,15 +71,18 @@ void runJacobi(Node* points, int numOfPoints, int d)
     matrix * eigenValues, *eigenVectors, *vectorsToPrint;
     matrix * mat;
 
+
     mat = pointsToMat(points, numOfPoints, d);
+
     jacobiAlg(mat, &eigenValues, &eigenVectors);
 
     printEigenfromMat(eigenValues);
     vectorsToPrint = transposeMatrix(eigenVectors, true);
+
     printMatrix(vectorsToPrint);
 
     freeMatrix(eigenValues);
-    freeMatrix(eigenVectors); 
+    freeMatrix(vectorsToPrint); 
     freePointsList(points,numOfPoints);
 }
 
@@ -1131,6 +1134,11 @@ void printEigenfromMat(matrix* m)
         }
         printf("%.4f,",value);  
     }
+
+    value = m->data[i][i];
+    if (fabs(value) < 0.00005) {
+        value = 0.0000;
+    }
     printf("%.4f\n",value);
 }
 
@@ -1177,7 +1185,7 @@ void assertFunc(void* x)
     if (!x)
     {
         printf("An Error Has Occured");
-        exit(true);
+        assert(false);
     }
 }
 
