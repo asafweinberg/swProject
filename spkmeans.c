@@ -1098,14 +1098,19 @@ void freePointsList(Node * points, int numOfpoints)
 void printMatrix(matrix* A)
 {
     int i, j;
+    double value;
     for (i = 0; i < A->rows; i++)
     {
         for (j = 0; j < A->columns; j++)
         {
+            value = A->data[i][j];
+            if (fabs(value) < 0.00005) {
+                value = 0.0000;
+            }
             if (j != A->columns-1)
-                printf("%.4f,", A->data[i][j]);
+                printf("%.4f,", value);
             else
-                printf("%.4f", A->data[i][j]);
+                printf("%.4f", value);
         }
         if (i != A->rows-1) 
             printf("\n");
@@ -1116,11 +1121,16 @@ void printMatrix(matrix* A)
 void printEigenfromMat(matrix* m)
 {
     int i;
-    for(i=0 ; i<m->rows-1 ; i++)
+    double value;
+    for(i = 0; i < m->rows - 1; i++)
     {
-        printf("%.4f,",m->data[i][i]);  
+        value = m->data[i][i];
+        if (fabs(value) < 0.00005) {
+            value = 0.0000;
+        }
+        printf("%.4f,",value);  
     }
-    printf("%.4f\n",m->data[i][i]);
+    printf("%.4f\n",value);
 }
 
 
@@ -1138,17 +1148,22 @@ void printEigenArr(eigenVal * arr, int length)
 void printClusters(cluster* clusters, int k, int d)
 {
     int i, j;
+    double value;
     for (i = 0; i < k; i++)
     {
         for (j = 0; j < d; j++)
         {
+            value = clusters[i].prevMean[j];
+            if (fabs(value) < 0.00005) {
+                value = 0.0000;
+            }
             if (j != d-1)
             {
-                printf("%.4f,",clusters[i].prevMean[j]);
+                printf("%.4f,", value);
             }
             else
             {
-              printf("%.4f",clusters[i].prevMean[j]);  
+              printf("%.4f", value);  
             }
         }
         if (i != k-1) 
