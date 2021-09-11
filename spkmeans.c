@@ -862,6 +862,7 @@ double ** kmeansFunc(int k, int maxIter, int numOfPoints, int d, Node* pointsMat
 
     clusters = centroids;
     doKmeans(clusters,points,d,k,numOfPoints, maxIter);
+    printClusters(clusters,k,d);
 
     clusterArr = (double**)calloc(k,sizeof(double*));
     assertFunc(clusterArr);

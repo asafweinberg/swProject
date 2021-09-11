@@ -52,7 +52,6 @@ def main(args):
             pList.append(num)
         dListPoints.append(pList)
     
-    finalMeans = km.fit(k, maxIter, numOfPoints, d, dListPoints, dListCen)
 
     indexesToPrint = ""
 
@@ -62,52 +61,7 @@ def main(args):
 
     print(indexesToPrint)
 
-    for fm in finalMeans[:-1]:
-        for num in fm[:-1]:
-            print('{:.4f}'.format(num) + ',', end="")
-        print('{:.4f}'.format(fm[-1]))
-    
-    fm=finalMeans[-1]
-
-    for num in fm[:-1]:
-        print('{:.4f}'.format(num) + ',', end="")
-    print('{:.4f}'.format(fm[-1]), end="")
-
-
-
-# def readData(fileName1, fileName2):
-#     data = None
-#     try:
-#         data1 = pd.read_csv(fileName1, header=None)
-#         data1.rename(columns={0 :'key'}, inplace=True)
-#         data2 = pd.read_csv(fileName2, header=None)
-#         data2.rename(columns={0 :'key'}, inplace=True)
-
-#     except:
-#         print("Error reading file")
-#         return None, False
-    
-#     data = pd.merge(data1, data2, on = 'key')
-#     sortedPoints = data.sort_values(by=['key'])
-#     sortedPoints = sortedPoints.set_index('key')
-#     return sortedPoints, True
-
-# def readDataSp(fileName):
-#     data = None
-#     try:
-#         data = pd.read_csv(fileName, header=None)
-#         data.rename(columns={0 :'key'}, inplace=True)
-#         # data2 = pd.read_csv(fileName2, header=None)
-#         # data2.rename(columns={0 :'key'}, inplace=True)
-
-#     except:
-#         print("Error reading file")
-#         return None, False
-    
-#     # data = pd.merge(data1, data2, on = 'key')
-#     sortedPoints = data.sort_values(by=['key'])
-#     sortedPoints = sortedPoints.set_index('key')
-#     return sortedPoints, True    
+    finalMeans = km.fit(k, maxIter, numOfPoints, d, dListPoints, dListCen)  
 
 
 def calcCentroids(points, k): # points is numpy ; #centroids list of tuples[index,data]  ; data is ndarray too

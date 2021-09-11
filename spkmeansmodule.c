@@ -63,7 +63,7 @@ static PyObject *kmeansClustering(PyObject *self, PyObject *args) {
     nodesList = (Node*) getPointsMatrix(d, numberOfPoints, points);
     initialClusters = makeClusters(k, d, centroids);
     means = kmeansFunc(k, maxIterations, numberOfPoints, d, nodesList, initialClusters); //means are final centroids
-
+    
     wrapList = PyList_New(0);
     for (i=0 ; i<k ; i++)
     {
